@@ -1,14 +1,13 @@
-from CA import *
+from Commutateur import *
 
 class User:
-    def __init__(self, commutateur : CA, adresse : str):
+    def __init__(self, commutateur : Commutateur, adresse : List[int]):
         self.adresse = adresse
         self.commutateur = commutateur
 
-    def appel(self, adresseDestination : str):
+    def appel(self, adresseDestination : List[int]) -> bool:
         self.destinataire = adresseDestination
-        self.commutateur.demanderCommunication(self.adresse, self.destinataire)
-        pass
-    
+        return self.commutateur.demanderCommunication(self.adresse, self.destinataire)
+
     def raccrocher(self):
-        pass
+        self.commutateur.fermerCommunication(self.adresse)
