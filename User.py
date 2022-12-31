@@ -1,4 +1,5 @@
-from Commutateur import *
+from Commutateur import Commutateur
+from typing import List
 
 class User:
     def __init__(self, commutateur : Commutateur, adresse : List[int]):
@@ -7,7 +8,10 @@ class User:
 
     def appel(self, adresseDestination : List[int]) -> bool:
         self.destinataire = adresseDestination
-        return self.commutateur.demanderCommunication(self.adresse, self.destinataire)
+        appelOK = self.commutateur.demanderCommunicationStatique(self.adresse, self.destinataire)
+        if not(appelOK):
+            print(f"Appel refusé pour le client à l'adresse {self.adresse}")
+        return appelOK
 
     def raccrocher(self):
         self.commutateur.fermerCommunication(self.adresse)
