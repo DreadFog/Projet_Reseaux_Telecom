@@ -18,8 +18,11 @@ listInt2Str = lambda l: "" if l == [] else str(l[0]) if len(l) == 1 else str(l[0
 class Commutateur:
 
     def __init__(self, adresse : list):
-        self.voisins : Dict[tuple, Tuple[List[tuple], int, Commutateur]] = dict() # {@voisin -> [src1, src2], capacité du lien, voisin (objet)}
-        self.adresse = tuple(adresse) # conversion en tuple pour pouvoir être utilisé comme clé dans un dictionnaire
+        # {@voisin -> [src1, src2], capacité du lien, voisin (objet)}
+        self.voisins : Dict[tuple, Tuple[List[tuple], int, Commutateur]] = dict() 
+
+        # Conversion en tuple pour pouvoir être utilisé comme clé dans un dictionnaire
+        self.adresse = tuple(adresse) 
 
         # Associe une communication en cours au prochain saut
         # Un élément par communication en cours
@@ -28,21 +31,24 @@ class Commutateur:
     def ajouterVoisin(self, listeVoisins : List[Tuple[tuple, Tuple[List[tuple], int, 'Commutateur']]]):
         #                   listVoisins :  [    (@voisin       ,      ([src1, src2], capacité, voisin (objet)))]
         for v in listeVoisins:
-            print(f"Voisin : {v[1]}")
             ad : tuple = v[0]
             self.voisins[ad] = v[1]
 
     def getVoisin(self, adrVoisin: tuple) -> Tuple[List[tuple], int, 'Commutateur']:
         return self.voisins[adrVoisin]
 
-    def demanderCommunicationStatique(self, adresseSource : tuple, adresseDestination : tuple) -> bool:
+    def demanderCommunicationStatique( self, adresseSource  : tuple \
+                                     , adresseDestination   : tuple, verbose = False) \
+                                                            -> Tuple[bool,List[tuple]]:
         """Toujours le même choix de routage, calculé en fonction de l'adresse"""
-        print(f"Demande de communication sur le commutateur : {self.adresse} de {adresseSource} vers {adresseDestination}")
+        if verbose:
+            print(f"Demande de communication sur le commutateur : {self.adresse} de {adresseSource} vers {adresseDestination}")
         # Recherche du voisin : on compare les @ pour avoir celle la plus "proche" de l'@ dest
         resulats_i = list()
         voisin_proche = list()
         adressesAccessibles = [self.adresse]+list(self.voisins.keys())
-        print(adressesAccessibles)
+        if verbose:
+            print(f"Adresses acecessibles : {adressesAccessibles}")
         for voisin in adressesAccessibles:
             #print(f"Voisin : {voisin} de type : {type(voisin)}")
             
@@ -64,12 +70,14 @@ class Commutateur:
             adNextCommutateur = adressesAccessibles[j]
         else:
             adNextCommutateur = adressesAccessibles[i]
-        print(f"Prochain Saut de {self.adresse} vers {adNextCommutateur}")
+        if verbose:
+            print(f"Prochain Saut de {self.adresse} vers {adNextCommutateur}")
+            print(f"voisin choisi : {self.voisins}")
 
 
         if adNextCommutateur == self.adresse:
             # On est en liaison directe avec le destinataire
-            return True
+            return (True, [self.adresse, adresseDestination])
         else:
             # Recherche du voisin:
             # self ∩ @dest : adresseDestination[0:i-1].0.0.0 
@@ -86,28 +94,31 @@ class Commutateur:
 
             # On a le prochain saut : il faut vérifier que la capacité du lien
             # est OK et enregistrer l'@ source dans les communications en cours
-            print(f"voisin choisi : {self.voisins}")
             comsEnCours, capacitéLien, voisin = self.voisins[adNextCommutateur]
             assert not (adresseSource in comsEnCours)
 
             if len(comsEnCours) == capacitéLien:
                 # Capacité maximale atteinte
-                return False
+                return (False, [])
             else:
-                comEtablie = voisin.demanderCommunicationStatique(adresseSource, adresseDestination)
+                comEtablie, trace = voisin.demanderCommunicationStatique(adresseSource, adresseDestination)
                 if comEtablie:
                     self.prochainCom[adresseSource] = adNextCommutateur
                     comsEnCours.append(adresseSource)
-                return comEtablie
+                return (comEtablie, [self.adresse] + trace)
 
-    def demanderCommunicationPartageCharge(self, adresseSource : tuple, adresseDestination : tuple) -> bool:
+    def demanderCommunicationPartageCharge( self, adresseSource : tuple\
+                                          , adresseDestination : tuple, verbose = False) \
+                                                            -> Tuple[bool,List[tuple]]:
         """Partage équitablement en fonction de la capacité totale des liens"""
-        print(f"Demande de communication sur le commutateur : {self.adresse} de {adresseSource} vers {adresseDestination}")
+        if verbose:
+            print(f"Demande de communication sur le commutateur : {self.adresse} de {adresseSource} vers {adresseDestination}")
         # Soit on est en liaison directe, soit on envoi à la couche supérieure ou la même couche de manière random
         # Recherche des voisin possibles : on compare les @ pour se "raprocher" de l'@ dest
         resulats_i = list()
         adressesAccessibles : List[tuple] = [self.adresse]+list(self.voisins.keys())
-        print(f"Liste des adresses accessibles : {adressesAccessibles}")
+        if verbose:
+            print(f"Liste des adresses accessibles : {adressesAccessibles}")
         for voisin in adressesAccessibles:
             i = 0
             # Recherche de la zone qui diffère entre le commutateur actuel et l'@ dest
@@ -127,7 +138,8 @@ class Commutateur:
             # Adresses des voisins nous rapprochant de la destination
             ad_voisins_possibles = [adressesAccessibles[i] for i in indexes_possibles]
             capacites_voisins = [self.getVoisin(adNextComPossible)[1] for adNextComPossible in ad_voisins_possibles]
-            print(f"Liste des capacités associées aux voisins : {capacites_voisins}")
+            if verbose:
+                print(f"Liste des capacités associées aux voisins : {capacites_voisins}")
             # Choix de l'indice avec pondération en fonction de la capacité des liens
             rand_capacites = [c*random() for c in capacites_voisins]
             ind_voisin = rand_capacites.index(max(rand_capacites))
@@ -135,7 +147,7 @@ class Commutateur:
         
         if adNextCommutateur == self.adresse:
             # On est en liaison directe avec le destinataire
-            return True
+            return (True, [self.adresse, adresseDestination])
         else:
             # On a le prochain saut : il faut vérifier que la capacité du lien
             # est OK et enregistrer l'@ source dans les communications en cours
@@ -143,15 +155,17 @@ class Commutateur:
             assert not (adresseSource in comsEnCours)
             if len(comsEnCours) == capacitéLien:
                 # Capacité maximale atteinte
-                return False
+                return (False, [])
             else:
-                comEtablie = voisin.demanderCommunicationPartageCharge(adresseSource, adresseDestination)
+                comEtablie, trace = voisin.demanderCommunicationPartageCharge(adresseSource, adresseDestination)
                 if comEtablie:
                     self.prochainCom[adresseSource] = adNextCommutateur
                     comsEnCours.append(adresseSource)
-                return comEtablie
+                return (comEtablie, [self.adresse] + trace)
 
-    def demanderCommunicationAdaptative(self, adresseSource : tuple, adresseDestination : tuple) -> bool:
+    def demanderCommunicationAdaptative( self, adresseSource : tuple\
+                                       , adresseDestination : tuple, verbose = False) \
+                                                            -> Tuple[bool,List[tuple]]:
         """Partage équitablement en fonction de la capacité restante des liens"""
         # Soit on est en liaison directe, soit on envoi à la couche supérieure ou la même couche de manière random
         # Recherche des voisin possibles : on compare les @ pour se "raprocher" de l'@ dest
@@ -185,7 +199,7 @@ class Commutateur:
         
         if adNextCommutateur == self.adresse:
             # On est en liaison directe avec le destinataire
-            return True
+            return (True, [self.adresse, adresseDestination])
         else:
             # On a le prochain saut : il faut vérifier que la capacité du lien
             # est OK et enregistrer l'@ source dans les communications en cours
@@ -193,13 +207,13 @@ class Commutateur:
             assert not (adresseSource in comsEnCours)
             if len(comsEnCours) == capacitéLien:
                 # Capacité maximale atteinte
-                return False
+                return (False, [])
             else:
-                comEtablie = voisin.demanderCommunicationPartageCharge(adresseSource, adresseDestination)
+                comEtablie, trace = voisin.demanderCommunicationPartageCharge(adresseSource, adresseDestination)
                 if comEtablie:
                     self.prochainCom[adresseSource] = adNextCommutateur
                     comsEnCours.append(adresseSource)
-                return comEtablie
+                return (comEtablie, [self.adresse] + trace)
 
     def fermerCommunication(self, adresseSource : tuple):
         adresseVoisinProchainSaut = self.prochainCom[adresseSource]

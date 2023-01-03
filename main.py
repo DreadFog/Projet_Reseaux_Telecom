@@ -15,7 +15,7 @@ if __name__ == "__main__":
                         dest='strategy',
                         required=True)
     parser.add_argument('-n', '--number_of_users', dest='nc', default=10)
-    parser.add_argument('-v', '--verbose', dest='verbose', default='False')
+    parser.add_argument('-v', '--verbose', dest='verbose', default=False)
     args = vars(parser.parse_args())
     s = args.get('strategy')
     chosenStrategy : Strategie
@@ -30,10 +30,10 @@ if __name__ == "__main__":
             print("Error: unknown strategy. Defaulting to Statique")
             chosenStrategy = Strategie.Statique
     isVerbose = bool(args.get('verbose'))
-    users_count = int(args.get('nc')) 
+    users_count : int|None = args.get('nc')
     CTS_count = 3
     CA_count = 4
-    users_per_CA = users_count // CA_count
+    users_per_CA = users_count // CA_count if users_count != None else -1
     print("Users per CA: {}".format(users_per_CA))
     nb_appels_refuse = 0
     # capacity of the links
@@ -62,7 +62,6 @@ if __name__ == "__main__":
     #        |                   |                   |                    |
     #    c[0]-c[n/4-1]     c[n/4]-c[n/2-1]      c[n/2]-c[3n/4-1]     c[3n/4]-c[n]
     adresses_CTS = range(1, CTS_count)
-    print(adresses_CTS)
     adresses_CA = range(1, CA_count)
     liste_CA: list[Commutateur] = list()
     liste_CTS: list[Commutateur] = list()
@@ -118,7 +117,8 @@ if __name__ == "__main__":
         for i in range(0, users_per_CA):
             user_adress = tuple(list(c.adresse[0:-1]) + [i+1])
             liste_users[-1].append(User(c, user_adress))
-    print(liste_users)
+    if isVerbose:
+        print(liste_users)
     flatten = lambda l: [] if l == [] else l[0] if len(l)==1 else l[0]+flatten(l[1:])
     # print(flatten(liste_users))
     flattened_list_user : List[User] = flatten(liste_users)
@@ -127,9 +127,9 @@ if __name__ == "__main__":
         # Eviter qu'un client s'appelle lui-même
         while (client_dest == client):
             client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-
-        print(f"Appel de {client.adresse} vers {client_dest.adresse}")
-        if not(client.appel(client_dest.adresse, chosenStrategy)):
+        if isVerbose:
+            print(f"Appel de {client.adresse} vers {client_dest.adresse}")
+        if not(client.appel(client_dest.adresse, chosenStrategy, isVerbose)):
             nb_appels_refuse += 1
     print(f"Nombre total d'appels refusés : {nb_appels_refuse} sur {len(flattened_list_user)} appels")
 else:
