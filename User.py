@@ -1,4 +1,4 @@
-from Commutateur import Commutateur, Strategie
+from Commutateur import Commutateur, Strategie, printv
 
 def printAdress(ad : tuple) -> str:
     match len(ad):
@@ -13,13 +13,9 @@ class User:
 
     def appel( self, adresseDestination : tuple\
              , strategie : Strategie, verbose = False) -> bool:
-        if verbose:
-            print(f"Stratégie adoptée : {strategie}")
-        methodeAppel = { Strategie.Statique : self.commutateur.demanderCommunicationStatique \
-                       , Strategie.PartageCharge : self.commutateur.demanderCommunicationPartageCharge \
-                       , Strategie.Adaptative : self.commutateur.demanderCommunicationAdaptative}
+        printv(f"Stratégie adoptée : {strategie}", verbose)
         self.destinataire = adresseDestination
-        appelOK, trace = methodeAppel[strategie](self.adresse, self.destinataire, verbose)
+        appelOK, trace = Commutateur.demanderCommunication(self.commutateur, strategie, self.adresse, self.destinataire, verbose)
         if not(appelOK):
             print(f"Appel refusé pour le client à l'adresse {self.adresse}")
         else:
