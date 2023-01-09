@@ -20,7 +20,7 @@ A, B en communs -> dans la zone "3" (ie proche)
 
 class Commutateur:
 
-    def __init__(self, adresse : tuple):
+    def __init__(self, adresse : tuple, strategy: Strategie):
         # {@voisin -> [src1, src2], capacité du lien, voisin (objet)}
         self.voisins : Dict[tuple, Tuple[List[tuple], int, Commutateur]] = dict() 
 
@@ -30,14 +30,15 @@ class Commutateur:
         # Associe une communication en cours au prochain saut
         # Un élément par communication en cours
         self.prochainCom = dict() # {@Source -> prochain commutateur}
+        # la stratégie du commutateur
+        self.strategie = strategy
     
-    @staticmethod
-    def demanderCommunication( routeur : 'Commutateur', strategie : Strategie, adresseSource : tuple
+    def demanderCommunication(self, adresseSource : tuple
                              , adresseDestination : tuple, verbose = False):
-        methodeAppel = { Strategie.Statique        : routeur.demanderCommunicationStatique \
-                       , Strategie.PartageCharge   : routeur.demanderCommunicationPartageCharge \
-                       , Strategie.Adaptative      : routeur.demanderCommunicationAdaptative}
-        return methodeAppel[strategie](adresseSource, adresseDestination, verbose)
+        methodeAppel = { Strategie.Statique        : self.demanderCommunicationStatique \
+                       , Strategie.PartageCharge   : self.demanderCommunicationPartageCharge \
+                       , Strategie.Adaptative      : self.demanderCommunicationAdaptative}
+        return methodeAppel[self.strategie](adresseSource, adresseDestination, verbose)
 
     def ajouterVoisin(self, voisin : 'Commutateur', capacity : int):
         adVoisin = voisin.adresse
@@ -77,7 +78,7 @@ class Commutateur:
                 # Capacité maximale atteinte
                 return (False, [])
             else:
-                comEtablie, trace = Commutateur.demanderCommunication(voisin, strategie, adresseSource, adresseDestination)
+                comEtablie, trace = voisin.demanderCommunication(adresseSource, adresseDestination)
                 if comEtablie:
                     self.prochainCom[adresseSource] = adNextCommutateur
                     comsEnCours.append(adresseSource)

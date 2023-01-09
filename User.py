@@ -12,10 +12,9 @@ class User:
         self.commutateur = commutateur
 
     def appel( self, adresseDestination : tuple\
-             , strategie : Strategie, verbose = False) -> bool:
-        printv(f"Stratégie adoptée : {strategie}", verbose)
+             , verbose = False) -> bool:
         self.destinataire = adresseDestination
-        appelOK, trace = Commutateur.demanderCommunication(self.commutateur, strategie, self.adresse, self.destinataire, verbose)
+        appelOK, trace = Commutateur.demanderCommunication(self.commutateur, self.adresse, self.destinataire, verbose)
         if not(appelOK):
             print(f"Appel refusé pour le client à l'adresse {self.adresse}")
         else:

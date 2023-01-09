@@ -13,7 +13,7 @@ if __name__ == "__main__":
                         help="strategy used between Statique, PartageCharge and Adaptative",
                         choices=['Statique', 'PartageCharge', 'Adaptative'],
                         dest='strategy',
-                        required=True)
+                        default="Statique")
     parser.add_argument('-n', '--number_of_users', dest='nc', default=10)
     parser.add_argument('-v', '--verbose', dest='verbose', default=False)
     args = vars(parser.parse_args())
@@ -29,6 +29,8 @@ if __name__ == "__main__":
         case _:
             print("Error: unknown strategy. Defaulting to Statique")
             chosenStrategy = Strategie.Statique
+    print("Strategy chosen : " + str(chosenStrategy).split('.')[1])
+
     isVerbose = bool(args.get('verbose'))
     users_count : int|None = args.get('nc')
     CTS_count = 3
@@ -66,11 +68,11 @@ if __name__ == "__main__":
     liste_CA: list[Commutateur] = list()
     liste_CTS: list[Commutateur] = list()
     for i in adresses_CTS:
-        liste_CTS.append(Commutateur((i,0,0)))
+        liste_CTS.append(Commutateur((i,0,0), chosenStrategy))
 
     for i in range(len(adresses_CA)):
         # choice: address prefix of a CA is the same as the CTS of same idx. Ex: CA1 and CTS1 have same prefix
-        liste_CA.append(Commutateur((adresses_CTS[i%len(adresses_CTS)],adresses_CA[i],0)))
+        liste_CA.append(Commutateur((adresses_CTS[i%len(adresses_CTS)],adresses_CA[i],0), chosenStrategy))
 
     liste_CTS.insert(1, liste_CA.pop(-1))
     # Interconnection of the CTS
@@ -123,7 +125,7 @@ if __name__ == "__main__":
         while (client_dest == client):
             client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
         printv(f"Appel de {client.adresse} vers {client_dest.adresse}", isVerbose)
-        if not(client.appel(client_dest.adresse, chosenStrategy, isVerbose)):
+        if not(client.appel(client_dest.adresse, isVerbose)):
             nb_appels_refuse += 1
     print(f"Nombre total d'appels refusés : {nb_appels_refuse} sur {len(flattened_list_user)} appels")
 else:
