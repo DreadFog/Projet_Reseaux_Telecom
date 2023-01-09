@@ -14,7 +14,7 @@ class User:
     def appel( self, adresseDestination : tuple\
              , verbose = False) -> bool:
         self.destinataire = adresseDestination
-        appelOK, trace = Commutateur.demanderCommunication(self.commutateur, self.adresse, self.destinataire, verbose)
+        appelOK, trace = self.commutateur.demanderCommunication(self.adresse, self.destinataire, verbose)
         if not(appelOK):
             print(f"Appel refusé pour le client à l'adresse {self.adresse}")
         else:
