@@ -1,10 +1,5 @@
-from Commutateur import Commutateur, Strategie, printv
+from Commutateur import Commutateur, Strategie, printv, printAdress
 
-def printAdress(ad : tuple) -> str:
-    match len(ad):
-        case 0: return "\n"
-        case 1: return str(ad[0])
-        case _: return str(ad[0])+"."+printAdress(ad[1:])
 
 class User:
     def __init__(self, commutateur : Commutateur, adresse : tuple):
@@ -16,11 +11,12 @@ class User:
         self.destinataire = adresseDestination
         appelOK, trace = self.commutateur.demanderCommunication(self.adresse, self.destinataire, verbose)
         if not(appelOK):
-            print(f"Appel refusé pour le client à l'adresse {self.adresse}")
+            printv(f"Appel refusé pour le client à l'adresse {self.adresse}", verbose)
         else:
-            print("====== TRACE ======")
-            l = list(map(printAdress, [self.adresse]+trace))
-            print(*l)
+            if verbose:
+                print("====== TRACE ======")
+                l = list(map(printAdress, [self.adresse]+trace))
+                print(*l)
         return appelOK
 
     def raccrocher(self):
