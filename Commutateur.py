@@ -221,20 +221,21 @@ class Commutateur:
         # On remplace le dernier nombre de d'adresse du destinataire par 0
         adCommutateurFinal = tuple(list(adresseDestination[:-1])+[0]) # NIK
         idDest : int = dictAdComId[adCommutateurFinal][1]
-        pred = dijkstra(csgraph=1/traffic_state, directed=False, indices=self.id, return_predecessors=True)[1]
+        pred = dijkstra(csgraph=1/traffic_state, indices=self.id, return_predecessors=True)[1]
         if pred[idDest] == -9999:
             # On ne peut pas faire d'appel vers l'@ dest
             return (False, list())
 
         chemin = [self.adresse]
         dictKeys = list(dictAdComId.keys())
+        valuesOfDict = list(map(lambda x: x[1], dictAdComId.values()))
         while idDest != self.id:
             # modification de la matrice de traffic, celle-ci reste symétrique
-            traffic_state[idDest][pred[idDest]] -= 1
+            #traffic_state[idDest][pred[idDest]] -= 1
             traffic_state[pred[idDest]][idDest] -= 1
             # Indices dans la liste des clés du dictionnaire des commutateurs en fin de chemin
-            indexIdDest = list(map(lambda x: x[1], dictAdComId.values())).index(idDest)
-            indexIdDestP = list(map(lambda x: x[1], dictAdComId.values())).index(pred[idDest])
+            indexIdDest = valuesOfDict.index(idDest)
+            indexIdDestP = valuesOfDict.index(pred[idDest])
             # Adresses de ces dits commutateurs
             adNext = list(dictAdComId.keys())[indexIdDest]
             adNextP = list(dictAdComId.keys())[indexIdDestP]
@@ -242,7 +243,7 @@ class Commutateur:
             dictAdComId[adNextP][0].prochainCom[adresseSource] = dictAdComId[adNext][0]
             chemin.append(dictKeys[indexIdDest])
             idDest = pred[idDest]
-            
+
         return (True, chemin+[adresseDestination])
 
 
@@ -255,7 +256,7 @@ class Commutateur:
             voisinProchainSaut[2].fermerCommunication(adresseSource)
             # déblocage de la communication dans la matrice de traffic
             traffic_state[self.id][voisinProchainSaut[2].id] += 1
-            traffic_state[voisinProchainSaut[2].id][self.id] += 1
+            #traffic_state[voisinProchainSaut[2].id][self.id] += 1
             self.prochainCom.pop(adresseSource)
         except KeyError:
             # par construction, une erreur signifie qu'on est au cas terminal de la fermeture de communication.
