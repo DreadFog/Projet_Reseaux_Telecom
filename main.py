@@ -6,6 +6,7 @@ from typing import List
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
+    ####### PARSING #######
     parser = argparse.ArgumentParser(
                     prog = 'RouteComparer',
                     description = 'Program evaluating and comparing the performance of different routing algorithms',
@@ -33,10 +34,11 @@ if __name__ == "__main__":
             print("Error: unknown strategy. Defaulting to Statique")
             chosenStrategy = Strategie.Statique
     print("Strategy chosen : " + str(chosenStrategy).split('.')[1])
-
     isVerbose = bool(args.get('verbose'))
     arg_nc = args.get('nc')
     users_count : int = arg_nc if (arg_nc != None) else 100 # nombre de users par défaut
+
+    ####### INIT #######
     # capacity of the links
     cts_wire = 50
     cts_ca_wire = 25
@@ -77,7 +79,9 @@ if __name__ == "__main__":
         # choice: address prefix of a CA is the same as the CTS of same idx. Ex: CA1 and CTS1 have same prefix
         liste_CA.append(Commutateur((adresses_CTS[i%len(adresses_CTS)],adresses_CA[i],0), chosenStrategy))
 
+
     liste_CTS.insert(1, liste_CA.pop(-1))
+
     # Interconnection of the CTS
     # Edge cases: first and last ones are only connected to one of their kind and two of the other kind
     lenCTS = len(liste_CTS)
@@ -97,74 +101,60 @@ if __name__ == "__main__":
 
     # for CA
     liste_CA[0].ajouterVoisins([ (liste_CA[1], ca_wire)
-                            , (liste_CTS[0], cts_ca_wire)
-                            , (liste_CTS[1], cts_ca_wire)])
+                               , (liste_CTS[0], cts_ca_wire)
+                               , (liste_CTS[1], cts_ca_wire)])
     liste_CA[-1].ajouterVoisins([ (liste_CA[-2], ca_wire)
                                 , (liste_CTS[-1], cts_ca_wire)
                                 , (liste_CTS[-2], cts_ca_wire)])
     for i in range(1, lenCA -1): # omit first and last
         liste_CA[i].ajouterVoisins([ (liste_CA[(i-1)%lenCA], ca_wire) # connected to 2 CA
-                                , (liste_CA[(i+1)%lenCA], ca_wire)
-                                , (liste_CTS[(i+1)%lenCTS], cts_ca_wire) # connected to 3 CTS
-                                , (liste_CTS[i%lenCTS], cts_ca_wire)
-                                , (liste_CTS[(i-1)%lenCTS], cts_ca_wire)])  
-
-    strategies = [Strategie.Statique, Strategie.PartageCharge, Strategie.Adaptative, Strategie.Dijkstra]
+                                   , (liste_CA[(i+1)%lenCA], ca_wire)
+                                   , (liste_CTS[(i+1)%lenCTS], cts_ca_wire) # connected to 3 CTS
+                                   , (liste_CTS[i%lenCTS], cts_ca_wire)
+                                   , (liste_CTS[(i-1)%lenCTS], cts_ca_wire)])  
 
     resultats = dict()
 
+    # create the users
+    # It is a list of list of users. Each list of users is a group of users connected to the same CA
+    liste_users : List[List[User]] = list()
+    for c in liste_CA:
+        liste_users.append(list())
+        for i in range(0, users_per_CA):
+            user_adress = tuple(list(c.adresse[0:-1]) + [i+1])
+            liste_users[-1].append(User(c, user_adress))
+    printv(liste_users, isVerbose)
+    flatten = lambda l: [] if l == [] else l[0] if len(l)==1 else l[0]+flatten(l[1:])
+    flattened_list_user : List[User] = flatten(liste_users)
+
+    def essai_appel(liste_clients_appelants):
+        """Simulation des appels entre clients"""
+        # Choix de la source et de la destination
+        client_source = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
+        while client_source in liste_clients_appelants:
+            client_source = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
+
+        client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
+        # Eviter qu'un client s'appelle lui-même
+        while (client_dest == client_source):
+            client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
+        printv(f"Appel de {client_source.adresse} vers {client_dest.adresse}", isVerbose)
+        return client_source, client_source.appel(client_dest.adresse, isVerbose)
+
     plt.figure()
 
-    for strategy in strategies:
+    for strategy in list(Strategie):
 
         for commutateur in liste_CTS:
             commutateur.setStrategy(strategy)
         for commutateur in liste_CA:
             commutateur.setStrategy(strategy)
 
-        # create the users
-        # It is a list of list of users. Each list of users is a group of users connected to the same CA
-        liste_users : List[List[User]] = list()
-        for c in liste_CA:
-            liste_users.append(list())
-            for i in range(0, users_per_CA):
-                user_adress = tuple(list(c.adresse[0:-1]) + [i+1])
-                liste_users[-1].append(User(c, user_adress))
-        printv(liste_users, isVerbose)
-
-        flatten = lambda l: [] if l == [] else l[0] if len(l)==1 else l[0]+flatten(l[1:])
-        flattened_list_user : List[User] = flatten(liste_users)
-
-        # Calls
-        
-        # for client in flattened_list_user:
-        #     client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-        #     # Eviter qu'un client s'appelle lui-même
-        #     while (client_dest == client):
-        #         client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-        #     printv(f"Appel de {client.adresse} vers {client_dest.adresse}", isVerbose)
-        #     if not(client.appel(client_dest.adresse, isVerbose)):
-        #         nb_appels_refuse += 1
-        # print(f"Nombre total d'appels refusés : {nb_appels_refuse} sur {len(flattened_list_user)} appels")
-
-        def essai_appel(liste_clients_appelants):
-            # Choix de la source et de la destination
-            client_source = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-            while client_source in liste_clients_appelants:
-                client_source = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-
-            client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-            # Eviter qu'un client s'appelle lui-même
-            while (client_dest == client_source):
-                client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-            printv(f"Appel de {client_source.adresse} vers {client_dest.adresse}", isVerbose)
-            return client_source, client_source.appel(client_dest.adresse, isVerbose)
-
 
         resultats[strategy] = (list(), list())
 
-        
-        # Pour une charge réseau de 10% à 90%, par pas de 10%, on mesure le taux t'appels refusés
+
+        # Pour une charge réseau de 10% à 60%, par pas de 10%, on mesure le taux t'appels refusés
         for i in range(1,6):
             print(f"Charge du réseau : {i*10}%" )
             charge_reseau_max = i * users_count // 10
@@ -180,7 +170,7 @@ if __name__ == "__main__":
                 if appel_reussi:
                     liste_clients_appelants.append(source)
 
-            for j in range(charge_reseau_max * 100): # facteur 10 pour moyenner suffisamment longtemps
+            for j in range(charge_reseau_max * 1000): # facteur moyenner suffisamment longtemps
 
                 # print(f"Appels en cours : {liste_clients_appelants}")
 
