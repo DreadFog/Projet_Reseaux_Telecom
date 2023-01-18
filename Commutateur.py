@@ -2,7 +2,8 @@ from typing import List, Tuple, Dict
 from random import random
 from enum import Enum
 import numpy as np
-from scipy.sparse.csgraph import dijkstra
+#from scipy.sparse.csgraph import dijkstra
+from Dijkstra import Dijkstra
 
 class Strategie(Enum):
     Statique = 0
@@ -221,7 +222,8 @@ class Commutateur:
         # On remplace le dernier nombre de d'adresse du destinataire par 0
         adCommutateurFinal = tuple(list(adresseDestination[:-1])+[0]) # NIK
         idDest : int = dictAdComId[adCommutateurFinal][1]
-        pred = dijkstra(csgraph=1/traffic_state, indices=self.id, return_predecessors=True)[1]
+        #pred = dijkstra(csgraph=1/traffic_state, indices=self.id, return_predecessors=True)[1]
+        pred = Dijkstra(G=1/traffic_state, s=self.id, lci=lambda x,y: x+y)[1]
         if pred[idDest] == -9999:
             # On ne peut pas faire d'appel vers l'@ dest
             return (False, list())
