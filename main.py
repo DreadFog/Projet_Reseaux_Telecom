@@ -157,8 +157,8 @@ if __name__ == "__main__":
                                 , (liste_CA[0], cts_ca_wire)
                                 , (liste_CA[1], cts_ca_wire)])
     liste_CTS[-1].ajouterVoisins([(liste_CTS[-2], cts_wire)
-                                , (liste_CA[-1], cts_ca_wire)
-                                , (liste_CA[-2], cts_ca_wire)])
+                                 , (liste_CA[-1], cts_ca_wire)
+                                 , (liste_CA[-2], cts_ca_wire)])
     for i in range(1, lenCTS -1): # omit first and last
         liste_CTS[i].ajouterVoisins([ (liste_CTS[(i-1)%lenCTS], cts_wire) # connected to 2 CTS
                                     , (liste_CTS[(i+1)%lenCTS], cts_wire)
@@ -198,27 +198,27 @@ if __name__ == "__main__":
     #plt.figure()
 
 
-    rapportPannes = [0]*len(Strategie)
-    tauxRefusInitial = [0]*6
+    diffPannes = [0]*len(Strategie)
+    nbRefusInitial = [0]*6
     commutateurs = liste_CA+liste_CTS
     # Provoquer des pannes sur les liens
     for nbPanne in [0,5]: # Juste 5 pannes
         pannesCrees = list()
 
         # Création des pannes
-        #for _ in range(nbPanne):
-        #    comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
-        #    while len(comPanneExt1.voisins) == 0:
-        #        comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
-        #    adsVoisins = list(comPanneExt1.voisins.keys())
-        #    comPanneExt2 = comPanneExt1.voisins[adsVoisins[random.randint(0,len(adsVoisins)-1)]][2]
-        #    capacite = comPanneExt1.supprimerVoisin(comPanneExt2)
-        #    pannesCrees.append((comPanneExt1, comPanneExt2, capacite))
+        for _ in range(nbPanne):
+            comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+            while len(comPanneExt1.voisins) == 0:
+                comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+            adsVoisins = list(comPanneExt1.voisins.keys())
+            comPanneExt2 = comPanneExt1.voisins[adsVoisins[random.randint(0,len(adsVoisins)-1)]][2]
+            capacite = comPanneExt1.supprimerVoisin(comPanneExt2)
+            pannesCrees.append((comPanneExt1, comPanneExt2, capacite))
 
 
         # Faire varier la stratégie
         for strategy in list(Strategie):
-            label = printStrategy(s) + "" if nbPanne == 0 else " avec " + str(nbPanne) + " pannes"
+            label = printStrategy(strategy) + "" if nbPanne == 0 else " avec " + str(nbPanne) + " pannes"
             printv(f"Strategie : {label}", isVerbose)
 
             for commutateur in liste_CTS:
@@ -226,23 +226,23 @@ if __name__ == "__main__":
             for commutateur in liste_CA:
                 commutateur.setStrategy(strategy)
 
-            charge, tauxRefus, diff = getChargeRefus(flattened_list_user, tauxRefusInitial)
+            charge, tauxRefus, diff = getChargeRefus(flattened_list_user, nbRefusInitial)
 
             if nbPanne == 0:
                 plots[0].plot(charge, tauxRefus, label=label)
-                tauxRefusInitial = tauxRefus
+                nbRefusInitial = diff
             else:
-                rapportPannes[strategy.value] = mean(diff)
+                diffPannes[strategy.value] = mean(diff)/MOYENNE
 
         # Rétablissement des pannes
         for (comPanneExt1, comPanneExt2, capacite) in pannesCrees:
             comPanneExt1.ajouterVoisin(comPanneExt2, capacite)
 
     for strategy in list(Strategie):
-        plots[1].bar(list(map(lambda s: printStrategy(s), Strategie)), rapportPannes)
+        plots[1].bar(list(map(lambda s: printStrategy(s), Strategie)), diffPannes)
 
     plots[0].set(xlabel="Charge en %", ylabel = "Taux d'appels refusés en %")
-    plots[1].set(xlabel = "Stratégie", ylabel="Appels refusés / résultat sans pannes")
+    plots[1].set(xlabel = "Stratégie", ylabel="Nombre d'appels refusés en plus")
     plots[0].set_title("Évolution du taux d'appels refusés")
     plots[1].set_title("Nombre de refus supplémentaires moyens pour une charge <=60% avec 5 pannes")
     plots[0].legend()
