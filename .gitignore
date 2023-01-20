@@ -1,1 +1,8 @@
 __pycache__
+
+# gitignore pour la compilation du rapport avec latexmk, a update si nécessaire
+rapport/*.log
+rapport/*fls
+rapport/*aux
+rapport/*fdb_latexmk
+/rapport/*.synctex.gz
