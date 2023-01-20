@@ -19,8 +19,8 @@ class User:
                 print(*l)
         return appelOK
 
-    def raccrocher(self):
-        self.commutateur.fermerCommunication(self.adresse)
+    def raccrocher(self, verbose):
+        self.commutateur.fermerCommunication(self.adresse, verbose)
         
     def __repr__(self) -> str:
         return f"User({self.adresse})"

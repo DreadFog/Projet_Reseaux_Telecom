@@ -1,9 +1,76 @@
 import argparse
 import random
-from Commutateur import Commutateur, Strategie, printv, CTS_count, CA_count
+from statistics import mean
+from Commutateur import Commutateur, Strategie, printv, CTS_count, CA_count, printStrategy
 from User import User
 from typing import List
 import matplotlib.pyplot as plt
+
+isVerbose = False
+users_count = 0
+MOYENNE = 1000
+
+def essai_appel(users, liste_clients_appelants):
+        """Simulation des appels entre clients"""
+        # Choix de la source et de la destination
+        client_source = users[random.randint(0, len(users)-1)]
+        while client_source in liste_clients_appelants:
+            client_source = users[random.randint(0, len(users)-1)]
+
+        client_dest = users[random.randint(0, len(users)-1)]
+        # Eviter qu'un client s'appelle lui-même
+        while (client_dest == client_source):
+            client_dest = users[random.randint(0, len(users)-1)]
+
+        printv(f"Appel de {client_source.adresse} vers {client_dest.adresse}", isVerbose)
+        return client_source, client_source.appel(client_dest.adresse, isVerbose)
+
+
+def getChargeRefus(users, nbRefusInitial):
+        resultats = (list(), list(), list())
+
+        # Pour une charge réseau de 10% à 60%, par pas de 10%, on mesure le taux t'appels refusés
+        for i in range(1,6):
+            print(f"Charge du réseau : {i*10}%" )
+            charge_reseau_max = i * users_count // 10
+
+            liste_clients_appelants : List[User] = list()
+
+            nb_appels_acceptes = 0
+            nb_appels_refuses = 0
+
+            for _ in range(MOYENNE):
+                # On "remplit" le réseau avant de commencer à mesurer le taux d'appels refusés
+                while(len(liste_clients_appelants) < charge_reseau_max) :
+                    source, appel_reussi = essai_appel(users, liste_clients_appelants)
+                    if appel_reussi:
+                        liste_clients_appelants.append(source)
+
+                for _ in range(charge_reseau_max): # facteur moyenner suffisamment longtemps
+
+                    # print(f"Appels en cours : {liste_clients_appelants}")
+
+                    # S'il y a trop d'appels en cours, on ferme le premier de la liste
+                    if len(liste_clients_appelants) >= charge_reseau_max:
+                        liste_clients_appelants[0].raccrocher(isVerbose)
+                        liste_clients_appelants.pop(0)
+
+                    client_source, appel_reussi = essai_appel(users, liste_clients_appelants)
+
+                    if appel_reussi:
+                        liste_clients_appelants.append(client_source)
+                        nb_appels_acceptes += 1
+                    else:
+                        nb_appels_refuses += 1
+
+            resultats[0].append(i/10)
+            resultats[1].append(nb_appels_refuses / (nb_appels_acceptes + nb_appels_refuses) * 100)
+            resultats[2].append(nb_appels_refuses-nbRefusInitial[i-1])
+
+            for client in liste_clients_appelants:
+                client.raccrocher(isVerbose)
+
+        return resultats
 
 if __name__ == "__main__":
     ####### PARSING #######
@@ -127,77 +194,59 @@ if __name__ == "__main__":
     flatten = lambda l: [] if l == [] else l[0] if len(l)==1 else l[0]+flatten(l[1:])
     flattened_list_user : List[User] = flatten(liste_users)
 
-    def essai_appel(liste_clients_appelants):
-        """Simulation des appels entre clients"""
-        # Choix de la source et de la destination
-        client_source = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-        while client_source in liste_clients_appelants:
-            client_source = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
+    plots = plt.subplots(1,2)[1]
+    #plt.figure()
 
-        client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-        # Eviter qu'un client s'appelle lui-même
-        while (client_dest == client_source):
-            client_dest = flattened_list_user[random.randint(0, len(flattened_list_user)-1)]
-        printv(f"Appel de {client_source.adresse} vers {client_dest.adresse}", isVerbose)
-        return client_source, client_source.appel(client_dest.adresse, isVerbose)
 
-    plt.figure()
+    rapportPannes = [0]*len(Strategie)
+    tauxRefusInitial = [0]*6
+    commutateurs = liste_CA+liste_CTS
+    # Provoquer des pannes sur les liens
+    for nbPanne in [0,5]: # Juste 5 pannes
+        pannesCrees = list()
+
+        # Création des pannes
+        #for _ in range(nbPanne):
+        #    comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+        #    while len(comPanneExt1.voisins) == 0:
+        #        comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+        #    adsVoisins = list(comPanneExt1.voisins.keys())
+        #    comPanneExt2 = comPanneExt1.voisins[adsVoisins[random.randint(0,len(adsVoisins)-1)]][2]
+        #    capacite = comPanneExt1.supprimerVoisin(comPanneExt2)
+        #    pannesCrees.append((comPanneExt1, comPanneExt2, capacite))
+
+
+        # Faire varier la stratégie
+        for strategy in list(Strategie):
+            label = printStrategy(s) + "" if nbPanne == 0 else " avec " + str(nbPanne) + " pannes"
+            printv(f"Strategie : {label}", isVerbose)
+
+            for commutateur in liste_CTS:
+                commutateur.setStrategy(strategy)
+            for commutateur in liste_CA:
+                commutateur.setStrategy(strategy)
+
+            charge, tauxRefus, diff = getChargeRefus(flattened_list_user, tauxRefusInitial)
+
+            if nbPanne == 0:
+                plots[0].plot(charge, tauxRefus, label=label)
+                tauxRefusInitial = tauxRefus
+            else:
+                rapportPannes[strategy.value] = mean(diff)
+
+        # Rétablissement des pannes
+        for (comPanneExt1, comPanneExt2, capacite) in pannesCrees:
+            comPanneExt1.ajouterVoisin(comPanneExt2, capacite)
 
     for strategy in list(Strategie):
+        plots[1].bar(list(map(lambda s: printStrategy(s), Strategie)), rapportPannes)
 
-        for commutateur in liste_CTS:
-            commutateur.setStrategy(strategy)
-        for commutateur in liste_CA:
-            commutateur.setStrategy(strategy)
-
-
-        resultats[strategy] = (list(), list())
-
-
-        # Pour une charge réseau de 10% à 60%, par pas de 10%, on mesure le taux t'appels refusés
-        for i in range(1,6):
-            print(f"Charge du réseau : {i*10}%" )
-            charge_reseau_max = i * users_count // 10
-
-            liste_clients_appelants : List[User] = list()
-
-            nb_appels_acceptes = 0
-            nb_appels_refuses = 0
-
-            # On "remplit" le réseau avant de commencer à mesurer le taux d'appels refusés
-            while(len(liste_clients_appelants) < charge_reseau_max) :
-                source, appel_reussi = essai_appel(liste_clients_appelants)
-                if appel_reussi:
-                    liste_clients_appelants.append(source)
-
-            for j in range(charge_reseau_max * 1000): # facteur moyenner suffisamment longtemps
-
-                # print(f"Appels en cours : {liste_clients_appelants}")
-
-                # S'il y a trop d'appels en cours, on ferme le premier de la liste
-                if len(liste_clients_appelants) >= charge_reseau_max:
-                    liste_clients_appelants[0].raccrocher()
-                    liste_clients_appelants.pop(0)
-                
-                client_source, appel_reussi = essai_appel(liste_clients_appelants)
-
-                if appel_reussi:
-                    liste_clients_appelants.append(client_source)
-                    nb_appels_acceptes += 1
-                else:
-                    nb_appels_refuses += 1
-            
-            resultats[strategy][0].append(i/10)
-            resultats[strategy][1].append(nb_appels_refuses / (nb_appels_acceptes + nb_appels_refuses) * 100)
-
-            for client in liste_clients_appelants:
-                client.raccrocher()
-        
-        plt.plot(resultats[strategy][0], resultats[strategy][1], label=strategy)
-
-    plt.xlabel("Charge en %")
-    plt.ylabel("Taux d'appels refusés en %")
-    plt.legend()
+    plots[0].set(xlabel="Charge en %", ylabel = "Taux d'appels refusés en %")
+    plots[1].set(xlabel = "Stratégie", ylabel="Appels refusés / résultat sans pannes")
+    plots[0].set_title("Évolution du taux d'appels refusés")
+    plots[1].set_title("Nombre de refus supplémentaires moyens pour une charge <=60% avec 5 pannes")
+    plots[0].legend()
+    plots[1].legend()
     plt.show()
 
 

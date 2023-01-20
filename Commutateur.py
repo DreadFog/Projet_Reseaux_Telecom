@@ -11,6 +11,14 @@ class Strategie(Enum):
     Adaptative = 2
     Dijkstra = 3
 
+def printStrategy(strategy) -> str :
+    match strategy:
+        case Strategie.Statique: return "Statique"
+        case Strategie.PartageCharge: return "PartageCharge"
+        case Strategie.Adaptative: return "Adaptative"
+        case Strategie.Dijkstra: return "Dijkstra"
+        case _: return "printStrategy non mis à jour"
+
 def printv(s, verbose = False):
   if verbose:
     print(s)
@@ -58,11 +66,11 @@ class Commutateur:
         self.strategie = strategy
         self.id = id.giveID()
         dictAdComId[adresse] = (self, self.id)
-    
+
     def setStrategy(self, strategie : Strategie):
         """Permet de changer la stratégie d'un commutateur: utile pour comparer les stratégies lors de tests"""
         self.strategie = strategie
-    
+
     def demanderCommunication( self, adresseSource : tuple
                              , adresseDestination : tuple, verbose = False):
         methodeAppel = { Strategie.Statique        : self.demanderCommunicationStatique \
@@ -72,10 +80,21 @@ class Commutateur:
         return methodeAppel[self.strategie](adresseSource, adresseDestination, verbose)
 
     def ajouterVoisin(self, voisin : 'Commutateur', capacity : int):
+        """Ajout d'un lien unidirectionnel de self vers voisin"""
         adVoisin = voisin.adresse
         self.voisins[adVoisin] = ([], capacity, voisin)
         traffic_state[self.id][voisin.id] = capacity
-        
+    
+    def supprimerVoisin(self, voisin : 'Commutateur'):
+        """Suppression d'un et un seul lien unidirectionnel de self vers voisin
+           Return: la capacité du lien en panne
+        """
+        adVoisin = voisin.adresse
+        capacite = self.voisins[adVoisin][1]
+        assert len(self.voisins.pop(adVoisin)[0]) == 0
+        traffic_state[self.id][voisin.id] = 0
+        return capacite
+
     def ajouterVoisins(self, listeVoisinsxCapacite : List[Tuple['Commutateur', int]]):
         #                    listeVoisinsxCapacite :  [(voisin (objet), capacité)]
         for voisin in listeVoisinsxCapacite:
@@ -83,7 +102,7 @@ class Commutateur:
 
     def _getVoisin(self, adrVoisin: tuple) -> Tuple[List[tuple], int, 'Commutateur']:
         return self.voisins[adrVoisin]
-    
+
     def _getZone(self, adresseDestination : tuple, voisin : tuple) -> int:
         """Recherche de la zone qui diffère entre le commutateur actuel et l'@ dest"""
         i = 0
@@ -93,7 +112,7 @@ class Commutateur:
                 break
             i += 1
         return i
-    
+
     def _giveNextHop( self, adNextCommutateur : tuple
                     , adresseSource : tuple , adresseDestination : tuple):
         """Renvoi le résultat de l'appel : (appelOK, trace des commutateurs)"""
@@ -144,6 +163,12 @@ class Commutateur:
         else:
             i = resulats_i.index(max(resulats_i))
             adNextCommutateur = adressesAccessibles[i]
+            if adNextCommutateur == self.adresse and resulats_i[0] < N-1:
+                printv(f"@ commutateur : {self.adresse} | @ destination : {adresseDestination}", verbose)
+                # Cas où on "maximise" la distance mais on est pas en liaison directe
+                # -> on ne peut pas trouver de route (avec notre topologie ! sinon avec 1 étage de plus tout change)
+                # Ne peut arriver qu'en cas de panne
+                return (False, [])
 
         printv(f"Prochain Saut de {self.adresse} vers {adNextCommutateur}\n \
                  voisin choisi : {self.voisins} ", verbose)
@@ -172,6 +197,8 @@ class Commutateur:
             d = resulats_i[0]
             # Indices des voisins nous rapprochant de la destination
             indexes_possibles = [index for index in range(len(resulats_i)) if resulats_i[index]>d]
+            if len(indexes_possibles) == 0:
+                return (False, [])
             # Adresses des voisins nous rapprochant de la destination
             ad_voisins_possibles = [adressesAccessibles[i] for i in indexes_possibles]
             capacites_voisins = [self._getVoisin(adNextComPossible)[1] for adNextComPossible in ad_voisins_possibles]
@@ -202,6 +229,8 @@ class Commutateur:
             d = resulats_i[0]
             # Indices des voisins nous rapprochant de la destination
             indexes_possibles = [index for index in range(len(resulats_i)) if resulats_i[index]>d]
+            if len(indexes_possibles) == 0:
+                return (False, [])
             # Adresses des voisins nous rapprochant de la destination
             ad_voisins_possibles = [adressesAccessibles[i] for i in indexes_possibles]
             capacites_voisins = [self._getVoisin(adNextComPossible)[1] for adNextComPossible in ad_voisins_possibles]
@@ -254,6 +283,7 @@ class Commutateur:
         try:
             adresseVoisinProchainSaut = self.prochainCom[adresseSource]
             voisinProchainSaut = self._getVoisin(adresseVoisinProchainSaut)
+            printv(f"Liaison avec le prochain voisin : {voisinProchainSaut}", verbose)
             voisinProchainSaut[0].remove(adresseSource)
             voisinProchainSaut[2].fermerCommunication(adresseSource)
             # déblocage de la communication dans la matrice de traffic
