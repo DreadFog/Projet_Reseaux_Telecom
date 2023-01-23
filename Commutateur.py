@@ -2,7 +2,6 @@ from typing import List, Tuple, Dict
 from random import random
 from enum import Enum
 import numpy as np
-#from scipy.sparse.csgraph import dijkstra
 from Dijkstra import Dijkstra
 
 class Strategie(Enum):
@@ -13,8 +12,8 @@ class Strategie(Enum):
 
 def printStrategy(strategy) -> str :
     match strategy:
-        case Strategie.Statique: return "Statique"
-        case Strategie.PartageCharge: return "PartageCharge"
+        case Strategie.Statique: return "Static"
+        case Strategie.PartageCharge: return "LoadBalancing"
         case Strategie.Adaptative: return "Adaptative"
         case Strategie.Dijkstra: return "Dijkstra"
         case _: return "printStrategy non mis à jour"
@@ -36,7 +35,7 @@ N : taille des adresses (de la forme @ : A.B.C)
 A, B en communs -> dans la zone "3" (ie proche)
 """
 CTS_count = 3
-CA_count = 4
+CA_count = 6
 nbCommutateurs = CTS_count+CA_count
 # Initialise la matrice des communications
 traffic_state = np.zeros((nbCommutateurs, nbCommutateurs))

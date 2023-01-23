@@ -18,7 +18,7 @@
 
 \begin{document}
 
-\title{Comparaison de différents routages pour les réseaux RTC}
+\title{Comparison of different routing algorithms for Public Switched Telephone Networks (PSTN)}
 
 \author{IEEE Publication Technology,~\IEEEmembership{\textsc{Fraty} Quentin, \textsc{Barniaudy} Maxime, \textsc{Maillet} Nathan,~IEEE,}
         % <-this % stops a space
@@ -29,23 +29,30 @@
 \markboth{N7's Journal of Network Architectures,~Vol.~1, No.~1, January~2023}%
 {Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
 
-\IEEEpubid{0000--0000/00\$00.00~\copyright~2023 IEEE}
+%\IEEEpubid{0000--0000/00\$00.00~\copyright~2023 IEEE}
 % Remember, if you use this you must call \IEEEpubidadjcol in the second
 % column for its text to clear the IEEEpubid mark.
 
 \maketitle
 
 \begin{abstract}
+        Public Switched Telephone Networks (or PSTN for short) heavily rely on a complex
+        routing algorithm used to route calls between users. A good routing algorithm can
+        support higher network loads, an limit the damage caused to users in case of a network
+        breakdown. This study will show the different benefits and drawbacks of several routing algorithms,
+        namely MTP-3 routing, load balancing routing, and adaptative routing.
 \end{abstract}
 
 \begin{IEEEkeywords}
+Network, PSTN, Telephone, Routing algorithms, IEEE
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{O}{ualid} 
+\IEEEPARstart{T}{he} goal of this project was to compare
+the efficiency of different routing methods, under different load conditions, and in case of a switch failure.
 
-\section{Réponses aux questions \& État de l'existant}
-\subsection{Réseau sémaphore de la topologie considérée}
+\section{Answer to questions \& State of the art}
+\subsection{semaphore network of considered topology}
 
         \begin{tikzpicture}
                 \node[circle,draw,text=white,fill=lightgray] (PTS1) at (1,3){PTS1};
@@ -65,23 +72,117 @@
                 \draw[-] (PS2) -- (PS3);
         \end{tikzpicture}
 
-\subsection{Informations nécessaires à un routage par partage de charge}
-% question de l'exam
+\subsection{Information needed to route with load balancing}
+A load balancing routing protocol is defined by the fact that the routing decision is
+only affected by the capacity of the different wires connected to the current node. Hence, 
+in order to implement such algorithm, one needs to know beforehand the total capacity of the
+different wires of his architecture. In real life, such algorithm is very easy to set up,
+as a PSTN operator has the full knowledge of the network.
 
-\subsection{Informations nécessaires à un routage adaptatif}
-% question de l'exam
+In the network proposed as an example in the subject, and for a communication between CA1 and CA3,
+a load-balancing protocol would make the following decisions:
+\begin{itemize}
+        \item On the CA1 node, three links are available to be used by the routing algorithm.
+        Supposedly, let's pretend that CA-CTS links have twice the capacity of CA-CA links.
+        In that context, 40\% of the traffic would be directed to each CTS and the remaining 20\% 
+        would be routed to CA2.
+        \item In a load balancing algorithm, and without any other customization, there could be 
+        some kind of loop. For example, in the CTS1 node, the load balancing algorithm could be
+        forwarding messages coming from CA1 towards CTS1! To prevent that problem, a geographical
+        adressing can be put in place for the different nodes / clients. With that parameter taken
+        into consideration during the load balancing algorithm, CTS1 would only have three possible
+        links that get the current packet closer to the destination (CA1 - CTS1 being omitted).\\
+        With the same capacity assumption as before, the load balancing algorithm would then route
+        50\% of the communications from CA1 to CA3 through CTS2, and 25\% to CA2 and CA3.       
+\end{itemize} 
 
-\subsection{Routage des messages MTP-3}
-% question de l'exam
+% Risque
+The main risk with such routing is that if the main link breaks, we will route most of the
+traffic there while our data will be lost. The same happens if a widely used node goes down.
+An attempt to fix this issue may be to add communication between switches in order for them
+to spot issues and update his informations. This lead us to talk about adaptative routing
+which takes in account the state of the network.
 
-\subsection{Transfert d'appels}
-% question de l'exam
+\subsection{Information needed to an adaptative route}
+Deciding an adaptative route can be done in two different ways.
+A router can either have full knowledge of the load on the network, 
+or only knowledge of the load on the links between itself and its neighbors.
 
-\section{Outils et modèles}
-\section{Résultats}
+% Stratégie adaptative
+In the case where a router only has knowledge of its neighbor links, 
+the same algorithm as the load-balancing one can be used, but considering 
+the remaining capacity of the links, instead of the total capacity.
+
+% Stratégie Dijkstra avec la matrice de connexions
+In the case where a router has full knowledge of the network, a more complex algorithm, such as Dijkstra's
+algorithm can be used to find the path that has the least least chance of overloading a link in the network.
+
+% Risques
+An adaptative routing strategy eliminates most of the risks mentioned in the previous section, because full
+knowledge of the network implies that the system will be able to react to a network breakdown.
+
+\subsection{Routing of MTP-3 messages}
+For the communication between CA1 and CA2, as they are linked, the routing of MTP-3 messages is 
+trivial and as such CA1 transfert the signal data to CA2. The same thing repeats with CA1 and CTS1.
+In the case where we want to route messages from CA1 to CA3, the MTP-3 messages must first go through
+CTSs and as such, we can route them from CA1 to CTS1 for all messages. CTS1, which has a higher view
+of the network (geographical adressing), and CTS1 directly route those messages to CA3. The scheme used here is a PS-PTS-PS scheme. 
+
+\subsection{Call transfer}
+Consider the aforementioned network, with 3 users U1, U2, and U3, connected resp. to CA1, CA2, and CA3.
+Let there already be a call between U1 and U2, and let's say that U2 wants to transfer the call to U3.
+A call transfer protocol can go as follows : 
+\begin{itemize}
+        \item U2 starts a call with U3, meaning a path is created between CA2 and CA3
+        \item U3 accepts the incoming call from U2, validating the path between CA2 and CA3
+        \item U2 sends a message to its connecting switch CA2 that the call with U1 will be transferred to U3, and quits the call
+        \item CA2 attaches the paths from CA1 to CA2 and CA2 to CA3 to form a single path from CA1 to CA3
+\end{itemize}
+
+\section{Tools and models}
+In order to summarize the previously mentioned routing challenges in the PSTN, we decided to represent a PSTN in Python.
+As we did not have a need for performance but we wanted to analyze graphs and when we read the project, we thought of
+modeling this using an object oriented capable programming language. As such, Python seemed to be a good compromise
+With our own model, we would then be able to illustrate the routing algorithms, and their reaction to potential failures in the
+network.\\
+As mentioned in the previous paragraphs, we decided that :
+\begin{itemize}
+        \item CTS-CTS links would have an arbitrary capacity of 50
+        \item CTS-CA links would have a capacity of 25
+        \item CA-CA links would have a capacity of 10.
+\end{itemize}
+We also decided to generate a geographical addressing that follows this pattern:
+\[X.Y.Z\]
+where X is the adress of the CTS, Y is the adress of the CA and Z the adress of the client.
+For example, a client connected to the CA3 would have 3.3.45 as their adress.
+
+% Architecture du programme (classes etc...)
+The program of our simulation is organized in 4 files : 
+\begin{itemize}
+        \item \verb|Commutateur.py| which defines the behavior for the different routing methods on switches
+        \item \verb|User.py| which provides methods to start/end a call given a destination address
+        \item \verb|main.py| is the file in which the network is generated using the previous classes. It then 
+        performs different tests on the network.
+        \item \verb|Dijkstra.py| performs the Dijkstra algorithm, with the difference being that the first predecessor
+        of the current node is itself wich allows us to know quickly whether or not we are linked to the desstination or
+        the two nodes (the first one and the destination) are non-connex. 
+\end{itemize}
+
+% Limitations of the model
+
+\section{Results}
+\begin{center}
+\includegraphics[width=0.48\textwidth]{call_rate.png}
+% coeff moyenne = 1000
+%cts_wire = 50
+%cts_ca_wire = 25
+%ca_wire = 10
+%100 personnes
+
+\end{center}
 
 
-\section{References Section}
+\section{References section}
 
 
 \end{document}
