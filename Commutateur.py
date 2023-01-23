@@ -35,7 +35,7 @@ N : taille des adresses (de la forme @ : A.B.C)
 A, B en communs -> dans la zone "3" (ie proche)
 """
 CTS_count = 3
-CA_count = 6
+CA_count = 4
 nbCommutateurs = CTS_count+CA_count
 # Initialise la matrice des communications
 traffic_state = np.zeros((nbCommutateurs, nbCommutateurs))
@@ -112,6 +112,17 @@ class Commutateur:
             i += 1
         return i
 
+    def _getNeighbour(self, adressesAccessibles, adresseDestination):
+        voisin_proche = list()
+        resultats_i = list()
+        adressesAccessibles = [self.adresse]+list(self.voisins.keys())
+        for voisin in adressesAccessibles:
+            # Sert si aucun voisin dans la zone de destination, pour se rapprocher de la zone
+            voisin_proche.append(abs(voisin[0]-adresseDestination[0]))
+            # On ajoute la "distance" entre l'@ du voisin et l'@ dest
+            resultats_i.append(self._getZone(adresseDestination, voisin))
+        return resultats_i, voisin_proche
+
     def _giveNextHop( self, adNextCommutateur : tuple
                     , adresseSource : tuple , adresseDestination : tuple):
         """Renvoi le résultat de l'appel : (appelOK, trace des commutateurs)"""
@@ -145,29 +156,24 @@ class Commutateur:
         printv(f"Demande de communication sur le commutateur :\
                  {self.adresse} de {adresseSource} vers {adresseDestination}", verbose)
         # Recherche du voisin : on compare les @ pour avoir celle la plus "proche" de l'@ dest
-        resulats_i = list()
-        voisin_proche = list()
         adressesAccessibles = [self.adresse]+list(self.voisins.keys())
         printv(f"Adresses acecessibles : {adressesAccessibles}", verbose)
-        for voisin in adressesAccessibles:            
-            # Sert si aucun voisin dans la zone de destination, pour se rapprocher de la zone
-            voisin_proche.append(abs(voisin[0]-adresseDestination[0]))
-            # On ajoute la "distance" entre l'@ du voisin et l'@ dest
-            resulats_i.append(self._getZone(adresseDestination, voisin))
+        resultats_i, voisin_proche = self._getNeighbour(adressesAccessibles, adresseDestination)
 
-        if max(resulats_i) == 0:
-            j = voisin_proche.index(min(voisin_proche))
+        if resultats_i[0] == (N-1):
+            i = 0
+        elif max(resultats_i) == resultats_i[0]:
+            i = voisin_proche.index(min(voisin_proche))
             # On a pas de voisin qui a une zone en commun avec l'@ dest, on s'en rapproche
-            adNextCommutateur = adressesAccessibles[j]
         else:
-            i = resulats_i.index(max(resulats_i))
-            adNextCommutateur = adressesAccessibles[i]
-            if adNextCommutateur == self.adresse and resulats_i[0] < N-1:
-                printv(f"@ commutateur : {self.adresse} | @ destination : {adresseDestination}", verbose)
-                # Cas où on "maximise" la distance mais on est pas en liaison directe
-                # -> on ne peut pas trouver de route (avec notre topologie ! sinon avec 1 étage de plus tout change)
-                # Ne peut arriver qu'en cas de panne
-                return (False, [])
+            i = resultats_i.index(max(resultats_i))
+        adNextCommutateur = adressesAccessibles[i]
+        if adNextCommutateur == self.adresse and resultats_i[0] < N-1:
+            printv(f"@ commutateur : {self.adresse} | @ destination : {adresseDestination}", verbose)
+            # Cas où on "maximise" la distance mais on est pas en liaison directe
+            # -> on ne peut pas trouver de route (avec notre topologie ! sinon avec 1 étage de plus tout change)
+            # Ne peut arriver qu'en cas de panne
+            return (False, [])
 
         printv(f"Prochain Saut de {self.adresse} vers {adNextCommutateur}\n \
                  voisin choisi : {self.voisins} ", verbose)
@@ -182,20 +188,23 @@ class Commutateur:
                  {self.adresse} de {adresseSource} vers {adresseDestination}", verbose)
         # Soit on est en liaison directe, soit on envoi à la couche supérieure ou la même couche de manière random
         # Recherche des voisin possibles : on compare les @ pour se "raprocher" de l'@ dest
-        resulats_i = list()
         adressesAccessibles : List[tuple] = [self.adresse]+list(self.voisins.keys())
         printv(f"Liste des adresses accessibles : {adressesAccessibles}", verbose)
-        for voisin in adressesAccessibles:
-            # On ajoute la "distance" entre l'@ du voisin et l'@ dest
-            resulats_i.append(self._getZone(adresseDestination, voisin))    
+        resultats_i, voisin_proche = self._getNeighbour(adressesAccessibles, adresseDestination)
 
-        if resulats_i[0] == (N-1):
+        if resultats_i[0] == (N-1):
             adNextCommutateur = self.adresse
         else:
             # "Distance" entre le commutateur self et la destination
-            d = resulats_i[0]
-            # Indices des voisins nous rapprochant de la destination
-            indexes_possibles = [index for index in range(len(resulats_i)) if resulats_i[index]>d]
+            d = resultats_i[0]
+            if max(resultats_i) == d:
+                j = voisin_proche.index(min(voisin_proche))
+                # On liste les voisins qui nous rapprochent
+                indexes_possibles = [index for index in range(1,len(voisin_proche)) if voisin_proche[index]==voisin_proche[j]]
+            else:
+                # Indices des voisins nous rapprochant de la destination
+                indexes_possibles = [index for index in range(len(resultats_i)) if resultats_i[index]>d]
+            printv(f"Nombres de commutateurs qui nous rapproche de la destination : {len(indexes_possibles)}", verbose)
             if len(indexes_possibles) == 0:
                 return (False, [])
             # Adresses des voisins nous rapprochant de la destination
@@ -215,19 +224,21 @@ class Commutateur:
         """Partage équitablement en fonction de la capacité restante des liens"""
         # Soit on est en liaison directe, soit on envoi à la couche supérieure ou la même couche de manière random
         # Recherche des voisin possibles : on compare les @ pour se "raprocher" de l'@ dest
-        resulats_i = list()
         adressesAccessibles = [self.adresse]+list(self.voisins.keys())
-        for voisin in adressesAccessibles:
-            # On ajoute la "distance" entre l'@ du voisin et l'@ dest
-            resulats_i.append(self._getZone(adresseDestination, voisin))
+        resultats_i, voisin_proche = self._getNeighbour(adressesAccessibles, adresseDestination)
 
-        if resulats_i[0] == (N-1):
+        if resultats_i[0] == (N-1):
             adNextCommutateur = self.adresse
         else:
             # "Distance" entre le commutateur self et la destination
-            d = resulats_i[0]
-            # Indices des voisins nous rapprochant de la destination
-            indexes_possibles = [index for index in range(len(resulats_i)) if resulats_i[index]>d]
+            d = resultats_i[0]
+            if max(resultats_i) == d:
+                j = voisin_proche.index(min(voisin_proche))
+                # On liste les voisins qui nous rapprochent
+                indexes_possibles = [index for index in range(1,len(voisin_proche)) if voisin_proche[index]==voisin_proche[j]]
+            else:
+                # Indices des voisins nous rapprochant de la destination
+                indexes_possibles = [index for index in range(len(resultats_i)) if resultats_i[index]>d]
             if len(indexes_possibles) == 0:
                 return (False, [])
             # Adresses des voisins nous rapprochant de la destination
