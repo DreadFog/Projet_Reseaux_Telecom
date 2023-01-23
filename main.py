@@ -137,7 +137,6 @@ if __name__ == "__main__":
     #        |                   |                   |                    |
     #        |                   |                   |                    |
     #    c[0]-c[n/4-1]     c[n/4]-c[n/2-1]      c[n/2]-c[3n/4-1]     c[3n/4]-c[n]
-    # CTS : i.0.0 | CA int(i*nbCTS/nbCA).int(nbCTS/nbCA+1).0
     adresses_CTS = range(1, CTS_count+1)
     adresses_CA = range(1, CA_count+1)
 
@@ -151,9 +150,6 @@ if __name__ == "__main__":
     for i in adresses_CA:
         # choice: address prefix of a CA is the same as the CTS of same idx. Ex: CA1 and CTS1 have same prefix
         liste_CA.append(Commutateur((int(i*CTS_count/CA_count+(1 if i==1 else 0)),i,0), chosenStrategy))
-
-    #liste_CTS.insert(1, liste_CA.pop(-1))
-    #liste_CTS.insert(1, liste_CA.pop(-1))
 
     # Interconnection of the CTS
     # Edge cases: first and last ones are only connected to one of their kind and two of the other kind
@@ -179,22 +175,11 @@ if __name__ == "__main__":
     for i in range(1, lenCTS -1): # omit first and last
         liste_CTS[i].ajouterVoisins([ (liste_CTS[i-1], cts_wire) # connected to 2 CTS
                                     , (liste_CTS[i+1], cts_wire)])
-        #liste_CTS[i].ajouterVoisins([ (liste_CTS[i-1], cts_wire) # connected to 2 CTS
-        #                            , (liste_CTS[i+1], cts_wire)
-        #                            , (liste_CA[i%lenCA], cts_ca_wire) # connected to 3 CA
-        #                            , (liste_CA[(i-1)%lenCA], cts_ca_wire)
-        #                            , (liste_CA[(i+1)%lenCA], cts_ca_wire)])
 
     # Connection between CAs
     for i in range(1, lenCA -1): # omit first and last
         liste_CA[i].ajouterVoisins([ (liste_CA[i-1], ca_wire) # connected to 2 CA
                                    , (liste_CA[i+1], ca_wire)])
-        #liste_CA[i].ajouterVoisins([ (liste_CA[i-1], ca_wire) # connected to 2 CA
-        #                           , (liste_CA[i+1], ca_wire)
-        #                           , (liste_CTS[(i+1)%lenCTS], cts_ca_wire) # connected to 3 CTS
-        #                           , (liste_CTS[i%lenCTS], cts_ca_wire)
-        #                           , (liste_CTS[(i-1)%lenCTS], cts_ca_wire)]) 
-    
     assert (lenCA >= lenCTS)
     # Cross 'Commutateurs' links
     for i in range(1, lenCA-1):
