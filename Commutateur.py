@@ -204,7 +204,7 @@ class Commutateur:
             else:
                 # Indices des voisins nous rapprochant de la destination
                 indexes_possibles = [index for index in range(len(resultats_i)) if resultats_i[index]>d]
-            printv(f"Nombres de commutateurs qui nous rapproche de la destination : {len(indexes_possibles)}", verbose)
+            printv(f"Nombres de commutateurs qui nous rapprochent de la destination : {len(indexes_possibles)}", verbose)
             if len(indexes_possibles) == 0:
                 return (False, [])
             # Adresses des voisins nous rapprochant de la destination

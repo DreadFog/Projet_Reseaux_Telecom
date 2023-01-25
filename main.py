@@ -212,12 +212,11 @@ if __name__ == "__main__":
     printv(liste_users, isVerbose)
     flatten = lambda l: [] if l == [] else l[0] if len(l)==1 else l[0]+flatten(l[1:])
     flattened_list_user : List[User] = flatten(liste_users)
-    printv(traffic_state, isVerbose)
+    printv(traffic_state, isVerbose) 
     
-    #plots = plt.subplots(1,2)[1]
+    plots = plt.subplots(1,2)[1]
     plt.figure()
-
-
+    
     diffPannes = [0]*len(Strategie)
     nbRefusInitial = [0]*10
     commutateurs = liste_CA+liste_CTS
@@ -225,15 +224,51 @@ if __name__ == "__main__":
     for nbPanne in [0,5]: # Juste 5 pannes
         pannesCrees = list()
 
-        # Création des pannes
-        for _ in range(nbPanne):
+        # Création des pannes: première méthode
+        # idée: on choisit un commutateur, on choisit un de ses voisins, on supprime le lien
+        """ for _ in range(nbPanne):
+            # choisir un commutateur non isolé
             comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
             while len(comPanneExt1.voisins) == 0:
                 comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
             adsVoisins = list(comPanneExt1.voisins.keys())
+            # choisir un de ses voisins
             comPanneExt2 = comPanneExt1.voisins[adsVoisins[random.randint(0,len(adsVoisins)-1)]][2]
             capacite = comPanneExt1.supprimerVoisin(comPanneExt2)
-            pannesCrees.append((comPanneExt1, comPanneExt2, capacite))
+            # mémorisation de la panne
+            pannesCrees.append((comPanneExt1, comPanneExt2, capacite)) """
+        # création des pannes: deuxième méthode
+        # idée: on remplit les liens plutot que de les supprimer
+        """ for _ in range(nbPanne):
+            # choisir un commutateur non isolé
+            comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+            while len(comPanneExt1.voisins) == 0:
+                comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+            adsVoisins = list(comPanneExt1.voisins.keys())
+            # choisir un de ses voisins
+            voisinChoisi = adsVoisins[random.randint(0,len(adsVoisins)-1)]
+            (commsEnCours, capa, comPanneExt2) = comPanneExt1.voisins[voisinChoisi]
+            # remplir le lien au maximum de sa capacité
+            for i in range(capa):
+                commsEnCours.append((-(i+1), i, i)) # adresse factice négative
+            # mémorisation de la panne
+            pannesCrees.append((comPanneExt1, _, voisinChoisi)) """
+        # création de pannes: troisième méthode
+        # idée: on remplit tous les liens des commutateurs choisis
+        for _ in range(nbPanne):
+            # choisir un commutateur non isolé
+            comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+            while len(comPanneExt1.voisins) == 0:
+                comPanneExt1 = commutateurs[random.randint(0,len(commutateurs)-1)]
+            adsVoisins = list(comPanneExt1.voisins.keys())
+            # parcourir les voisins
+            for v in adsVoisins:
+                (commsEnCours, capa, comPanneExt2) = comPanneExt1.voisins[v]
+                # remplir le lien au maximum de sa capacité
+                for i in range(capa):
+                    commsEnCours.append((-(i+1), i, i)) # adresse factice négative
+                # mémorisation de la panne
+                pannesCrees.append((comPanneExt1, _, v))
 
 
         # Faire varier la stratégie
@@ -249,23 +284,26 @@ if __name__ == "__main__":
             charge, tauxRefus, diff = getChargeRefus(flattened_list_user, nbRefusInitial)
 
             if nbPanne == 0:
-                #plots[0].plot(charge, tauxRefus, label=label)
+                plots[0].plot(charge, tauxRefus, label=label)
                 plt.plot(charge, tauxRefus, label=label)
                 nbRefusInitial = diff
             else:
                 diffPannes[strategy.value] = mean(diff)/MOYENNE
 
-        # Rétablissement des pannes
+        """ # Rétablissement des pannes provoquées par la méthode 1
         for (comPanneExt1, comPanneExt2, capacite) in pannesCrees:
-            comPanneExt1.ajouterVoisin(comPanneExt2, capacite)
+            comPanneExt1.ajouterVoisin(comPanneExt2, capacite) """
+        # Rétablissement des pannes provoquées par la méthode 2
+        for (comPanneExt1, _, voisinChoisi) in pannesCrees:
+            comPanneExt1.voisins[voisinChoisi][0].clear()
 
     for strategy in list(Strategie):
-        pass#plots[1].bar(list(map(lambda s: printStrategy(s), Strategie)), diffPannes)
+        plots[1].bar(list(map(lambda s: printStrategy(s), Strategie)), diffPannes)
 
-    #plots[0].set(xlabel="Charge in %", ylabel = "Refused call rate in %")
-    #plots[1].set(xlabel = "Strategy", ylabel="Nombre d'appels refusés en plus")
-    #plots[0].set_title("Evolution of refused call rate")
-    #plots[1].set_title("Nombre de refus supplémentaires moyens pour une charge <=60% avec 5 pannes")
+    plots[0].set(xlabel="Charge in %", ylabel = "Refused call rate in %")
+    plots[1].set(xlabel = "Strategy", ylabel="Nombre d'appels refusés en plus")
+    plots[0].set_title("Evolution of refused call rate")
+    plots[1].set_title("Nombre de refus supplémentaires moyens pour une charge <=60% avec 5 pannes")
     #plots[0].legend()
     #plots[1].legend()
     plt.xlabel("Load in %")
