@@ -199,8 +199,8 @@ class Commutateur:
             d = resultats_i[0]
             if max(resultats_i) == d:
                 j = voisin_proche.index(min(voisin_proche))
-                # On liste les voisins qui nous rapprochent
-                indexes_possibles = [index for index in range(1,len(voisin_proche)) if voisin_proche[index]==voisin_proche[j]]
+                indexes_possibles = [index for index in range(1,len(voisin_proche)) \
+                                        if voisin_proche[index]==voisin_proche[j] and voisin_proche[index]!=voisin_proche[0]]
             else:
                 # Indices des voisins nous rapprochant de la destination
                 indexes_possibles = [index for index in range(len(resultats_i)) if resultats_i[index]>d]
@@ -235,7 +235,8 @@ class Commutateur:
             if max(resultats_i) == d:
                 j = voisin_proche.index(min(voisin_proche))
                 # On liste les voisins qui nous rapprochent
-                indexes_possibles = [index for index in range(1,len(voisin_proche)) if voisin_proche[index]==voisin_proche[j]]
+                indexes_possibles = [index for index in range(1,len(voisin_proche)) \
+                                        if voisin_proche[index]==voisin_proche[j] and voisin_proche[index]!=voisin_proche[0]]
             else:
                 # Indices des voisins nous rapprochant de la destination
                 indexes_possibles = [index for index in range(len(resultats_i)) if resultats_i[index]>d]

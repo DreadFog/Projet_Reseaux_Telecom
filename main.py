@@ -116,8 +116,8 @@ def getChargeRefus(users, nbRefusInitial, nbPanne, commutateurs):
                 pannesCrees = list()
                 # On créé les pannes
                 #generer_pannes_1(nbPanne, commutateurs, pannesCrees)
-                #generer_pannes_2(nbPanne, commutateurs, pannesCrees)
-                generer_pannes_3(nbPanne, commutateurs, pannesCrees)
+                generer_pannes_2(nbPanne, commutateurs, pannesCrees)
+                #generer_pannes_3(nbPanne, commutateurs, pannesCrees)
 
                 # On "remplit" le réseau avant de commencer à mesurer le taux d'appels refusés
                 while(len(liste_clients_appelants) < charge_reseau_max) :
