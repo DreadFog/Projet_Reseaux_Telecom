@@ -34,8 +34,8 @@ N : taille des adresses (de la forme @ : A.B.C)
 @com : A.B.0
 A, B en communs -> dans la zone "3" (ie proche)
 """
-CTS_count = 3
-CA_count = 4
+CTS_count = 5
+CA_count = CTS_count + 1
 nbCommutateurs = CTS_count+CA_count
 # Initialise la matrice des communications
 traffic_state = np.zeros((nbCommutateurs, nbCommutateurs))

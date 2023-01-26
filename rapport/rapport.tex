@@ -173,6 +173,7 @@ During the creation of our project, we quickly faced the limitation induced by o
 Firstly, the fact that we are running our Python program on a single thread does not allow parallel call demands, which could lead
 to potential incoherent states of the call matrix.\\
 \section{Results}
+\subsection{With the proposed network}
 Note: in this section, link capacities will be cited as (inter CTS link, CTS - CA link, inter CA link).\\
 Having now created our model, it was important to try the different anticipated tests on it. As a reminder, the objective was to
 compare the different routing algorithms' performance and their reaction to network failures.
@@ -190,8 +191,67 @@ network loads. Here were the results:
 Please note that those results were obtained for a network with 3 CTS, 4 CA and 100 users equally partitioned between the CAs. The
 links wapacities were (50, 25, 10).\\
 These results corresponded our expectations as the Static method's performance quickly deteriorated with the network load. Indeed, 
-this method is not able to avoid TODO
-
+this method is not able to avoid filling in the already overencumbered links of the network.\\
+To furthermore compare the algorithms, we decided to simulate network failures in different ways:
+\begin{enumerate}
+        \item The first way of simulating a failure was by creating "link" failures by artificially filling them up. We tried to fill
+        20\% of the links pior to simulation. These were the obtained results:
+        \begin{center}
+                \includegraphics[width=0.48\textwidth]{link_failures.png}       
+        \end{center}
+        This result could have been predicted, as the more dynamic routing algorithms still are the most resilient to that kind of failure.
+        \item The second way of simulating a failure was this time by imitating a node failure, which would then be the equivalent of a 
+        switch failure. To do so, we randomly elected switches of the network and artificially filled all the links connected to it. That
+        way, it was impossible for a communication to go through that switch. These were the obtained results:
+        \begin{center}
+                \includegraphics[width=0.48\textwidth]{node_failures.png}       
+        \end{center}
+        Here, we can see that nodes failures tend to affect more heavily the routing algorithms than the previous simulation. Even though
+        this is partially due to the fact that incidentally, more links had to be filled in order to simulate that failure than the previous
+        one, an interesting trend can be observed. As it could have been mathematically proven using the different algorithms, the modified
+        Dijkstra algorithm is more often able to find a road thanks to its way of representing full links (the inversion of the matrix creates
+        +Inf cells that are automatically ignored by the routing algorithm).
+        \item A third way we tried altering the network was by simply "deleting" the link by putting its capacity value to 0. The problem in
+        that way of doing was that the different algorithms are mostly based on scouting the currently active communications going through
+        the commutator, hence the idea of our modified Dijkstra algorithm.
+\end{enumerate}
+\subsection{At a bigger scale}
+One might wonder what would happen if we were to increase the size of the experiment. We decided to do so by running a new set of tests after
+having increased all the different variables of the test.
+It is important to note that the following tests are being performed with the first type of failures being present, being link failures.\\
+We will associate the folliwing variables to each test: (\textbf{CTS count}, \textbf{CA count}, \textbf{Client count}).
+\begin{itemize}
+        \item Reference: the tests performed in the previous network had (\textbf{3}, \textbf{4}, \textbf{100}).
+        \item For (\textbf{12}, \textbf{13}, \textbf{800}), even though many more clients were going to use the network,
+        we decided to only double the different link capacities. Here are the results:
+        \begin{center}
+                \includegraphics[width=0.48\textwidth]{bigger_network.png}       
+        \end{center}
+        As expected, the refused call rate on the left has significantly increased due to the increase of simultaneous users for a small
+        increase of the link capacities. This showcases the scalability of our modelization. On a side note, we can notice that adding
+        a same percentage of link failures (20\%) in a larger network produces the same result in terms of comparative increase of refused calls
+        between the different algorithms. 
+        \item Due to the duration of the execution of tests at a bigger scale, we came back to a network of a more reasonable size
+        (\textbf{5}, \textbf{6}, \textbf{200}), but we decided to customize the links capacities.
+        \begin{itemize}
+                \item Without links between CA [inter CTS capacity: 30, CTS-CA capacity: 15, inter CA capacity: 0], we get the following result:
+                \begin{center}
+                        \includegraphics[width=0.48\textwidth]{without_CA_links.png}       
+                \end{center}
+                which showcases the importance of side links in the network for a routing algorithm to be effective. In our case, the absence
+                of CA-CA links removed a lot of possibilities for the routing algorithms, explaining the similarity in performance of the three
+                main algorithms. On the other hand, Dijkstra's algorithm being able to choose a longer path to get to destination allows it to
+                always find a route when no failure is in the network.
+                \item With all links having the same initial capacity [all links: 15], we notice an evolution in the rate of refused calls for
+                all the algorithms.
+                \begin{center}
+                        \includegraphics[width=0.48\textwidth]{same_capacities.png}
+                \end{center}
+                This is due to the fact that on one hand, the static method has comparatively better results thanks to the random choice of the
+                communication source and destination, and on the other hand the repartition done by the load balancing and adaptative algorithms
+                cannot use the capacity as a deciding factor anymore.
+        \end{itemize}
+\end{itemize}
 \section{References section}
 
 

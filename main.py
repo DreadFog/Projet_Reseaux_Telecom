@@ -11,9 +11,12 @@ from itertools import  filterfalse
 
 isVerbose = False
 users_count = 0
-MOYENNE = 100
+MOYENNE = 15
 PCT_MAX = 9
-
+# capacity of the links
+cts_wire = 15
+cts_ca_wire = 15
+ca_wire = 15
 # Création des pannes: première méthode
 # idée: on choisit un commutateur, on choisit un de ses voisins, on supprime le lien
 def generer_pannes_1(nbPanne, commutateurs, pannesCrees):
@@ -192,12 +195,8 @@ if __name__ == "__main__":
     assert(users_count >= 4)
 
     ####### INIT #######
-    # capacity of the links
-    cts_wire = 50
-    cts_ca_wire = 25
-    ca_wire = 10
     users_per_CA = users_count // CA_count
-    print("Users per CA: {}".format(users_per_CA))
+    printv("Users per CA: {}".format(users_per_CA), isVerbose)
     # when parsing is ok, create the network, and a list of users
     #           1.0.0                  2.0.0                  3.0.0
     #           CTS1-------------------CTS2-------------------CTS3
@@ -324,7 +323,7 @@ if __name__ == "__main__":
                 commutateur.setStrategy(strategy)
             for commutateur in liste_CA:
                 commutateur.setStrategy(strategy)
-
+            print(strategy)
             charge, tauxRefus, diff = getChargeRefus(flattened_list_user, nbRefusInitial, nbPanne, commutateurs)
 
             if nbPanne == 0:
@@ -342,8 +341,8 @@ if __name__ == "__main__":
     plots[1].set(xlabel = "Strategy", ylabel="Increase of refused calls")
     plots[0].set_title("Evolution of refused call rate")
     plots[1].set_title(f"Average increase in refused calls for {nbPannes} failures")
-    #plots[0].legend()
-    #plots[1].legend()
+    plots[0].legend()
+    plots[1].legend()
     """ plt.xlabel("Load in %")
     plt.ylabel("Refused call rate in %")
     plt.title("Evolution of refused call rate") """
