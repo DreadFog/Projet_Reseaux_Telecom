@@ -169,8 +169,16 @@ The program of our simulation is organized in 4 files :
 \end{itemize}
 
 % Limitations of the model
-
+During the creation of our project, we quickly faced the limitation induced by our modelization choices:\\
+Firstly, the fact that we are running our Python program on a single thread does not allow parallel call demands, which could lead
+to potential incoherent states of the call matrix.\\
 \section{Results}
+Note: in this section, link capacities will be cited as (inter CTS link, CTS - CA link, inter CA link).\\
+Having now created our model, it was important to try the different anticipated tests on it. As a reminder, the objective was to
+compare the different routing algorithms' performance and their reaction to network failures.
+We initially ran a simple test that does the following: a randomly selected user in the network tries to call another one, that
+\textbf{is allowed} to be connected to the \textbf{same CA}. We repeated that operation for the different algorithm and for different
+network loads. Here were the results:
 \begin{center}
 \includegraphics[width=0.48\textwidth]{call_rate.png}
 % coeff moyenne = 1000
@@ -178,9 +186,11 @@ The program of our simulation is organized in 4 files :
 % cts_ca_wire = 25
 % cts_wire = 10
 % user_count = 100
-
 \end{center}
-
+Please note that those results were obtained for a network with 3 CTS, 4 CA and 100 users equally partitioned between the CAs. The
+links wapacities were (50, 25, 10).\\
+These results corresponded our expectations as the Static method's performance quickly deteriorated with the network load. Indeed, 
+this method is not able to avoid 
 
 \section{References section}
 

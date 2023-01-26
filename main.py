@@ -116,8 +116,8 @@ def getChargeRefus(users, nbRefusInitial, nbPanne, commutateurs):
                 pannesCrees = list()
                 # On créé les pannes
                 #generer_pannes_1(nbPanne, commutateurs, pannesCrees)
-                generer_pannes_2(nbPanne, commutateurs, pannesCrees)
-                #generer_pannes_3(nbPanne, commutateurs, pannesCrees)
+                #generer_pannes_2(nbPanne, commutateurs, pannesCrees)
+                generer_pannes_3(nbPanne, commutateurs, pannesCrees)
 
                 # On "remplit" le réseau avant de commencer à mesurer le taux d'appels refusés
                 while(len(liste_clients_appelants) < charge_reseau_max) :
@@ -296,9 +296,6 @@ if __name__ == "__main__":
     flatten = lambda l: [] if l == [] else l[0] if len(l)==1 else l[0]+flatten(l[1:])
     flattened_list_user : List[User] = flatten(liste_users)
     printv(traffic_state, isVerbose)
-    #print(np.subtract(np.array(traffic_state), np.transpose(np.array(traffic_state))))
-    #nx.draw(nx.to_networkx_graph(np.array(traffic_state)))
-    #plt.show()
 
     plots = plt.subplots(1,2)[1]
     """ plt.figure() """
