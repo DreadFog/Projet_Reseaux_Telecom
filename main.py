@@ -11,12 +11,12 @@ from itertools import  filterfalse
 
 isVerbose = False
 users_count = 0
-MOYENNE = 1#5
-PCT_MAX = 1#9
+MOYENNE = 15
+PCT_MAX = 9
 # capacity of the links
-cts_wire = 5
-cts_ca_wire = 2
-ca_wire = 1
+cts_wire = 50
+cts_ca_wire = 25
+ca_wire = 10
 # Création des pannes: première méthode
 # idée: on choisit un commutateur, on choisit un de ses voisins, on supprime le lien
 def generer_pannes_1(nbPanne, commutateurs, pannesCrees):
@@ -317,7 +317,7 @@ if __name__ == "__main__":
         pannesCrees = list()
 
         # Faire varier la stratégie
-        for strategy in [Strategie.PartageCharge]:#list(Strategie):
+        for strategy in list(Strategie):
             label = printStrategy(strategy) + "" if nbPanne == 0 else " avec " + str(nbPanne) + " pannes"
             printv(f"Strategie : {printStrategy(strategy)}", isVerbose)
 
