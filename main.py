@@ -5,18 +5,18 @@ from Commutateur import Commutateur, Strategie, printv, CTS_count, CA_count, pri
 from User import User
 from typing import List
 import matplotlib.pyplot as plt
-import networkx as nx
-import numpy as np
+#import networkx as nx
+#import numpy as np
 from itertools import  filterfalse
 
 isVerbose = False
 users_count = 0
-MOYENNE = 15
-PCT_MAX = 9
+MOYENNE = 1#5
+PCT_MAX = 1#9
 # capacity of the links
-cts_wire = 15
-cts_ca_wire = 15
-ca_wire = 15
+cts_wire = 5
+cts_ca_wire = 2
+ca_wire = 1
 # Création des pannes: première méthode
 # idée: on choisit un commutateur, on choisit un de ses voisins, on supprime le lien
 def generer_pannes_1(nbPanne, commutateurs, pannesCrees):
@@ -59,6 +59,7 @@ def generer_pannes_2(nbPanne, commutateurs, pannesCrees):
         # mémorisation de la panne
         pannesCrees.append((comPanneExt1, _, voisinChoisi))
         pannesCrees.append((comPanneExt2, _, comPanneExt1.adresse))
+        printv(f"Panne entre {comPanneExt1} et {comPanneExt2}", isVerbose)
 
 # création de pannes: troisième méthode
 # idée: on remplit tous les liens des commutateurs choisis
@@ -104,7 +105,7 @@ def essai_appel(users, liste_clients_appelants):
 
 def getChargeRefus(users, nbRefusInitial, nbPanne, commutateurs):
         resultats = (list(), list(), list())
-
+        printv(f"Nombre de pannes : {nbPanne}", isVerbose)
         # Pour une charge réseau de 10% à 90%, par pas de 10%, on mesure le taux t'appels refusés
         for i in range(1,PCT_MAX+1):
             print(f"Charge du réseau : {i*10}%" )
@@ -188,11 +189,11 @@ if __name__ == "__main__":
         case _:
             print("Error: unknown strategy. Defaulting to Statique")
             chosenStrategy = Strategie.Statique
-    print("Strategy chosen : " + str(chosenStrategy).split('.')[1])
+    #printv("Strategy chosen : " + str(chosenStrategy).split('.')[1], isVerbose)
     isVerbose = bool(args.get('verbose'))
     arg_nc = args.get('nc')
     users_count : int = int(arg_nc) if (arg_nc != None) else 100 # nombre de users par défaut
-    assert(users_count >= 4)
+    assert(users_count > PCT_MAX)
 
     ####### INIT #######
     users_per_CA = users_count // CA_count
@@ -265,10 +266,11 @@ if __name__ == "__main__":
     for i in range(1, lenCA):
         liste_CA[i].ajouterVoisins([ (liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 else 0))-1], cts_ca_wire)
                                    , (liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 else 0))], cts_ca_wire)
-                                   , (liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 else 0)+(1 if i<lenCTS else 0))], cts_ca_wire)])
+                                   , (liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 and i!=lenCTS-1 else 0)+(1 if i<lenCTS else 0))
+                                   ], cts_ca_wire)])
         liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 else 0))-1].ajouterVoisin(liste_CA[i], cts_ca_wire)
         liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 else 0))].ajouterVoisin(liste_CA[i], cts_ca_wire)
-        liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 else 0))+(1 if i<lenCTS else 0)].ajouterVoisin(liste_CA[i], cts_ca_wire)
+        liste_CTS[int(i*CTS_count/CA_count+(1 if i==1 and i!=lenCTS-1 else 0))+(1 if i<lenCTS else 0)].ajouterVoisin(liste_CA[i], cts_ca_wire)
 
     if isVerbose:
         print("-------CTSs-------")
@@ -315,15 +317,15 @@ if __name__ == "__main__":
         pannesCrees = list()
 
         # Faire varier la stratégie
-        for strategy in list(Strategie):
+        for strategy in [Strategie.PartageCharge]:#list(Strategie):
             label = printStrategy(strategy) + "" if nbPanne == 0 else " avec " + str(nbPanne) + " pannes"
-            printv(f"Strategie : {label}", isVerbose)
+            printv(f"Strategie : {printStrategy(strategy)}", isVerbose)
 
             for commutateur in liste_CTS:
                 commutateur.setStrategy(strategy)
             for commutateur in liste_CA:
                 commutateur.setStrategy(strategy)
-            print(strategy)
+
             charge, tauxRefus, diff = getChargeRefus(flattened_list_user, nbRefusInitial, nbPanne, commutateurs)
 
             if nbPanne == 0:
@@ -345,8 +347,8 @@ if __name__ == "__main__":
     plots[1].legend()
     """ plt.xlabel("Load in %")
     plt.ylabel("Refused call rate in %")
-    plt.title("Evolution of refused call rate") """
-    plt.legend()
+    plt.title("Evolution of refused call rate") 
+    plt.legend()"""
     plt.show() 
 
 

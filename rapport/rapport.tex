@@ -177,9 +177,12 @@ state of the network.\\
 Another limitation of our model is that our way of creating links in the network is by invoking the method \textbf{AjouterVoisin} on 
 a commutator with the appropriate capacity as a parameter.this leads us to having to add two parallel links for a given ``physical link''
 in the network. As a consequence, our link capacities have all been divided by two compared to the initial choices.
+
 \section{Results}
 \subsection{With the proposed network of 2 CTS and 3 CA}
-Note: in this section, link capacities will be cited as (inter CTS link, CTS - CA link, inter CA link).\\
+\emph{Note1}: in this section, link capacities will be cited as (inter CTS link, CTS - CA link, inter CA link).
+
+\emph{Note2}: all of our results were rendered with a mean of 100 tries except for the bigger network (mean of 10 tries).\\
 Having now created our model, it was important to try the different anticipated tests on it. As a reminder, the objective was to
 compare the different routing algorithms' performance and their reaction to network failures.
 We initially ran a simple test that does the following: a randomly selected user in the network tries to call another one, that

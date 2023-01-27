@@ -1,5 +1,4 @@
-from Commutateur import Commutateur, Strategie, printv, printAdress
-
+from Commutateur import Commutateur, printv, printAdress
 
 class User:
     def __init__(self, commutateur : Commutateur, adresse : tuple):
