@@ -186,7 +186,7 @@ We initially ran a simple test that does the following: a randomly selected user
 \textbf{can} be connected to the \textbf{same CA}. We repeated that operation for the different algorithm and for different
 network loads. Here were the results:
 \begin{center}
-\includegraphics[width=0.48\textwidth]{call_rate.png}
+\includegraphics[width=0.48\textwidth]{images/call_rate.png}
 % coeff moyenne = 1000
 % cts_wire = 50
 % cts_ca_wire = 25
@@ -202,7 +202,7 @@ To furthermore elaborate our comparison of the algorithms, we decided to simulat
         \item The first way of simulating a failure was by creating ``link'' failures by artificially filling them up. We tried to fill
         20\% of the links pior to simulation. These were the obtained results:
         \begin{center}
-                \includegraphics[width=0.48\textwidth]{link_failures.png}       
+                \includegraphics[width=0.3\textwidth]{images/link_failures_2.png}       
         \end{center}
         This result could have been predicted, as the more dynamic routing algorithms still are the most resilient to that kind of failure.
         \item The second way of simulating a failure was this time by imitating a node failure, which would then be the equivalent of a 
@@ -210,7 +210,7 @@ To furthermore elaborate our comparison of the algorithms, we decided to simulat
         we went from 2 CTS, 3 CA to 4 CTS, 5 CA.Then, we randomly elected switches of the network and artificially filled all the links
         connected to it. That way, it was impossible for a communication to go through that switch. These were the obtained results:
         \begin{center}
-                \includegraphics[width=0.48\textwidth]{node_failures.png}       
+                \includegraphics[width=0.3\textwidth]{images/node_failures_2.png}       
         \end{center}
         Here, we can see that nodes failures tend to affect more heavily the routing algorithms than the previous simulation. Even though
         this is partially due to the fact that incidentally, more links had to be filled in order to simulate that failure than the previous
@@ -233,7 +233,8 @@ We will associate the folliwing variables to each test: (\textbf{CTS count}, \te
         \item For (\textbf{12}, \textbf{13}, \textbf{800}), even though many more clients were going to use the network,
         we decided to only double the different link capacities. Here are the results:
         \begin{center}
-                \includegraphics[width=0.48\textwidth]{bigger_network.png}       
+                \includegraphics[width=0.3\textwidth]{images/bigger_network_1.png}
+                \includegraphics[width=0.3\textwidth]{images/bigger_network_2.png}       
         \end{center}
         As expected, the refused call rate on the left has significantly increased due to the increase of simultaneous users for a small
         increase of the link capacities. This showcases the scalability of our modelization. On a side note, we can notice that adding
@@ -242,31 +243,27 @@ We will associate the folliwing variables to each test: (\textbf{CTS count}, \te
         \item Due to the duration of the execution of tests at a bigger scale, we came back to a network of a more reasonable size
         (\textbf{5}, \textbf{6}, \textbf{200}), but we decided to customize the links capacities.
         \begin{itemize}
-                \item Without links between CA [inter CTS capacity: 30, CTS-CA capacity: 15, inter CA capacity: 0], we get the following result:
-                \begin{center}
-                        \includegraphics[scale=0.30]{without_CA_links_1.png}   
-                        %\includegraphics[scale=0.30]{without_CA_links_2.png} % jsp si cest bien utile    
-                \end{center}
+                \item Without links between CA [inter CTS capacity: 30, CTS-CA capacity: 15, inter CA capacity: 0], we get the result that follows
                 which showcases the importance of side links in the network for a routing algorithm to be effective. In our case, the absence
                 of CA-CA links removed a lot of possibilities for the routing algorithms, explaining the similarity in performance of the three
                 main algorithms. On the other hand, Dijkstra's algorithm being able to choose a longer path to get to destination allows it to
                 always find a route when no failure is in the network.
-                \item With all links having the same initial capacity [all links: 15], we notice an evolution in the rate of refused calls for
-                all the algorithms.
-                \begin{center}
-                        \includegraphics[scale=0.30]{same_capacities_1.png}
-                        \includegraphics[scale=0.30]{same_capacities_2.png}
-                \end{center}
-                This is due to the fact that on one hand, the static method has comparatively better results thanks to the random choice of the
-                communication source and destination, and on the other hand the repartition done by the load balancing and adaptative algorithms
-                cannot use the capacity as a deciding factor anymore.
+                \includegraphics[width=0.3\textwidth]{images/without_CA_links_1.png}
+                %\includegraphics[scale=0.30]{images/without_CA_links_2.png} % jsp si cest bien utile    
+                \item All links with a capacity of 15 leads to an evolution in the rate of refused calls for
+                all the algorithms. This is due to the fact that the static method has comparatively better results thanks to the random choice of the
+                communication source and destination, and the repartition done by the load balancing and adaptative algorithms
+                cannot use the capacity as a deciding factor anymore.\\
+                \includegraphics[width=0.3\textwidth]{images/same_capacities_1.png}
+                \includegraphics[width=0.3\textwidth]{images/same_capacities_2.png}
         \end{itemize}
 \end{itemize}
+
+\newpage
 \section{Bibliography}
 \begin{itemize}
-        \item BEYLOT, A.-L. (2022). PSTN networks courses for Enseeiht. 
-        \item Scipy. (n.d.). The Dijkstra algorithm - Scipy . scipy.sparse.csgraph.dijkstra.
-        Retrieved from https://docs.scipy.org
+        \item BEYLOT, A.-L. (2022). PSTN networks courses for Enseeiht.
+        \item Dijkstra. Dijkstra's algorithm.
 \end{itemize}
 \end{document}
 
