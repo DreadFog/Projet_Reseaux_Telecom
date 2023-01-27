@@ -38,9 +38,10 @@
 \begin{abstract}
         Public Switched Telephone Networks (or PSTN for short) heavily rely on a complex
         routing algorithm used to route calls between users. A good routing algorithm can
-        support higher network loads, an limit the damage caused to users in case of a network
+        support higher network loads, and limit the damage caused to users in case of a network
         breakdown. This study will show the different benefits and drawbacks of several routing algorithms,
-        namely MTP-3 routing, load balancing routing, and adaptative routing.
+        namely MTP-3 routing, load balancing routing, and adaptative routing. We also implemented a Dijkstra's 
+        shortest path-based algorithm whose performance will be compared to the others.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -49,7 +50,7 @@ Network, PSTN, Telephone, Routing algorithms, IEEE
 
 \section{Introduction}
 \IEEEPARstart{T}{he} goal of this project was to compare
-the efficiency of different routing methods, under different load conditions, and in case of a switch failure.
+the efficiency of different routing methods, under different load conditions, and in case of a switch / link failure.
 
 \section{Answer to questions \& State of the art}
 \subsection{semaphore network of considered topology}
@@ -88,7 +89,7 @@ a load-balancing protocol would make the following decisions:
         would be routed to CA2.
         \item In a load balancing algorithm, and without any other customization, there could be 
         some kind of loop. For example, in the CTS1 node, the load balancing algorithm could be
-        forwarding messages coming from CA1 towards CTS1! To prevent that problem, a geographical
+        forwarding messages coming from CA1 towards CA1! To prevent that problem, a geographical
         adressing can be put in place for the different nodes / clients. With that parameter taken
         into consideration during the load balancing algorithm, CTS1 would only have three possible
         links that get the current packet closer to the destination (CA1 - CTS1 being omitted).\\
@@ -100,8 +101,8 @@ a load-balancing protocol would make the following decisions:
 The main risk with such routing is that if the main link breaks, we will route most of the
 traffic there while our data will be lost. The same happens if a widely used node goes down.
 An attempt to fix this issue may be to add communication between switches in order for them
-to spot issues and update his informations. This lead us to talk about adaptative routing
-which takes in account the state of the network.
+to spot issues and keep neighbours updated. This leads us to what is called an adaptative routing algorithm
+which takes into account the current state of the network.
 
 \subsection{Information needed to an adaptative route}
 Deciding an adaptative route can be done in two different ways.
@@ -122,8 +123,8 @@ An adaptative routing strategy eliminates most of the risks mentioned in the pre
 knowledge of the network implies that the system will be able to react to a network breakdown.
 
 \subsection{Routing of MTP-3 messages}
-For the communication between CA1 and CA2, as they are linked, the routing of MTP-3 messages is 
-trivial and as such CA1 transfert the signal data to CA2. The same thing repeats with CA1 and CTS1.
+For the communication between CA1 and CA2, as they are directly linked, the routing of MTP-3 messages is 
+trivial: indeed, CA1 transfers the signal data directly to CA2. The same thing repeats with CA1 and CTS1.
 In the case where we want to route messages from CA1 to CA3, the MTP-3 messages must first go through
 CTSs and as such, we can route them from CA1 to CTS1 for all messages. CTS1, which has a higher view
 of the network (geographical adressing), and CTS1 directly route those messages to CA3. The scheme used here is a PS-PTS-PS scheme. 
@@ -131,7 +132,7 @@ of the network (geographical adressing), and CTS1 directly route those messages 
 \subsection{Call transfer}
 Consider the aforementioned network, with 3 users U1, U2, and U3, connected resp. to CA1, CA2, and CA3.
 Let there already be a call between U1 and U2, and let's say that U2 wants to transfer the call to U3.
-A call transfer protocol can go as follows : 
+A call transfer protocol can go as follows: 
 \begin{itemize}
         \item U2 starts a call with U3, meaning a path is created between CA2 and CA3
         \item U3 accepts the incoming call from U2, validating the path between CA2 and CA3
@@ -145,7 +146,7 @@ As we did not have a need for performance but we wanted to analyze graphs and wh
 modeling this using an object oriented capable programming language. As such, Python seemed to be a good compromise
 With our own model, we would then be able to illustrate the routing algorithms, and their reaction to potential failures in the
 network.\\
-As mentioned in the previous paragraphs, we decided that :
+As mentioned in the previous paragraphs, we decided that:
 \begin{itemize}
         \item CTS-CTS links would have an arbitrary capacity of 50
         \item CTS-CA links would have a capacity of 25
@@ -154,31 +155,35 @@ As mentioned in the previous paragraphs, we decided that :
 We also decided to generate a geographical addressing that follows this pattern:
 \[X.Y.Z\]
 where X is the adress of the CTS, Y is the adress of the CA and Z the adress of the client.
-For example, a client connected to the CA3 would have 3.3.45 as their adress.
+For example, a client connected to the CA3 could have 3.3.45 as their adress.
 
 % Architecture du programme (classes etc...)
-The program of our simulation is organized in 4 files : 
+The program of our simulation is organized in 4 files: 
 \begin{itemize}
         \item \verb|Commutateur.py| which defines the behavior for the different routing methods on switches
         \item \verb|User.py| which provides methods to start/end a call given a destination address
         \item \verb|main.py| is the file in which the network is generated using the previous classes. It then 
         performs different tests on the network.
         \item \verb|Dijkstra.py| performs the Dijkstra algorithm, with the difference being that the first predecessor
-        of the current node is itself wich allows us to know quickly whether or not we are linked to the desstination or
+        of the current node is itself wich allows us to know quickly whether or not we are linked to the destination or
         the two nodes (the first one and the destination) are non-connex. 
 \end{itemize}
 
 % Limitations of the model
 During the creation of our project, we quickly faced the limitation induced by our modelization choices:\\
-Firstly, the fact that we are running our Python program on a single thread does not allow parallel call demands, which could lead
-to potential incoherent states of the call matrix.\\
+Firstly, the fact that we are running our Python program on a single thread does not allow parallel call demands. Such possibility
+could have showcased interaction of different simultaneous call requests on a shared object being the matrix that represents the current
+state of the network.\\
+Another limitation of our model is that our way of creating links in the network is by invoking the method \textbf{AjouterVoisin} on 
+a commutator with the appropriate capacity as a parameter.this leads us to having to add two parallel links for a given ``physical link''
+in the network. As a consequence, our link capacities have all been divided by two compared to the initial choices.
 \section{Results}
-\subsection{With the proposed network}
+\subsection{With the proposed network of 2 CTS and 3 CA}
 Note: in this section, link capacities will be cited as (inter CTS link, CTS - CA link, inter CA link).\\
 Having now created our model, it was important to try the different anticipated tests on it. As a reminder, the objective was to
 compare the different routing algorithms' performance and their reaction to network failures.
 We initially ran a simple test that does the following: a randomly selected user in the network tries to call another one, that
-\textbf{is allowed} to be connected to the \textbf{same CA}. We repeated that operation for the different algorithm and for different
+\textbf{can} be connected to the \textbf{same CA}. We repeated that operation for the different algorithm and for different
 network loads. Here were the results:
 \begin{center}
 \includegraphics[width=0.48\textwidth]{call_rate.png}
@@ -188,21 +193,22 @@ network loads. Here were the results:
 % cts_wire = 10
 % user_count = 100
 \end{center}
-Please note that those results were obtained for a network with 3 CTS, 4 CA and 100 users equally partitioned between the CAs. The
+Please note that those results were obtained for 100 users equally partitioned between the CAs. The
 links wapacities were (50, 25, 10).\\
 These results corresponded our expectations as the Static method's performance quickly deteriorated with the network load. Indeed, 
 this method is not able to avoid filling in the already overencumbered links of the network.\\
-To furthermore compare the algorithms, we decided to simulate network failures in different ways:
+To furthermore elaborate our comparison of the algorithms, we decided to simulate network failures in different ways:
 \begin{enumerate}
-        \item The first way of simulating a failure was by creating "link" failures by artificially filling them up. We tried to fill
+        \item The first way of simulating a failure was by creating ``link'' failures by artificially filling them up. We tried to fill
         20\% of the links pior to simulation. These were the obtained results:
         \begin{center}
                 \includegraphics[width=0.48\textwidth]{link_failures.png}       
         \end{center}
         This result could have been predicted, as the more dynamic routing algorithms still are the most resilient to that kind of failure.
         \item The second way of simulating a failure was this time by imitating a node failure, which would then be the equivalent of a 
-        switch failure. To do so, we randomly elected switches of the network and artificially filled all the links connected to it. That
-        way, it was impossible for a communication to go through that switch. These were the obtained results:
+        switch failure. To do so, firstly slightly increased the size of the network to allow more possibility for the selected routes:
+        we went from 2 CTS, 3 CA to 4 CTS, 5 CA.Then, we randomly elected switches of the network and artificially filled all the links
+        connected to it. That way, it was impossible for a communication to go through that switch. These were the obtained results:
         \begin{center}
                 \includegraphics[width=0.48\textwidth]{node_failures.png}       
         \end{center}
@@ -211,9 +217,11 @@ To furthermore compare the algorithms, we decided to simulate network failures i
         one, an interesting trend can be observed. As it could have been mathematically proven using the different algorithms, the modified
         Dijkstra algorithm is more often able to find a road thanks to its way of representing full links (the inversion of the matrix creates
         +Inf cells that are automatically ignored by the routing algorithm).
-        \item A third way we tried altering the network was by simply "deleting" the link by putting its capacity value to 0. The problem in
+        \item A third way we tried altering the network was by simply ``deleting'' the link by putting its capacity value to 0. The problem in
         that way of doing was that the different algorithms are mostly based on scouting the currently active communications going through
-        the commutator, hence the idea of our modified Dijkstra algorithm.
+        the commutator, hence the idea of our modified Dijkstra algorithm. Because the results did not provide an insightful result, we chose
+        not to show them.\\
+        Using our source code, this result can still be obtained by using the appropriate $``generer\_pannes\_X''$ function.
 \end{enumerate}
 \subsection{At a bigger scale}
 One might wonder what would happen if we were to increase the size of the experiment. We decided to do so by running a new set of tests after
@@ -221,7 +229,7 @@ having increased all the different variables of the test.
 It is important to note that the following tests are being performed with the first type of failures being present, being link failures.\\
 We will associate the folliwing variables to each test: (\textbf{CTS count}, \textbf{CA count}, \textbf{Client count}).
 \begin{itemize}
-        \item Reference: the tests performed in the previous network had (\textbf{3}, \textbf{4}, \textbf{100}).
+        \item Reference: the tests performed in the previous network had around (\textbf{3}, \textbf{4}, \textbf{100}) as an average.
         \item For (\textbf{12}, \textbf{13}, \textbf{800}), even though many more clients were going to use the network,
         we decided to only double the different link capacities. Here are the results:
         \begin{center}
@@ -236,7 +244,8 @@ We will associate the folliwing variables to each test: (\textbf{CTS count}, \te
         \begin{itemize}
                 \item Without links between CA [inter CTS capacity: 30, CTS-CA capacity: 15, inter CA capacity: 0], we get the following result:
                 \begin{center}
-                        \includegraphics[width=0.48\textwidth]{without_CA_links.png}       
+                        \includegraphics[scale=0.30]{without_CA_links_1.png}   
+                        %\includegraphics[scale=0.30]{without_CA_links_2.png} % jsp si cest bien utile    
                 \end{center}
                 which showcases the importance of side links in the network for a routing algorithm to be effective. In our case, the absence
                 of CA-CA links removed a lot of possibilities for the routing algorithms, explaining the similarity in performance of the three
@@ -245,16 +254,20 @@ We will associate the folliwing variables to each test: (\textbf{CTS count}, \te
                 \item With all links having the same initial capacity [all links: 15], we notice an evolution in the rate of refused calls for
                 all the algorithms.
                 \begin{center}
-                        \includegraphics[width=0.48\textwidth]{same_capacities.png}
+                        \includegraphics[scale=0.30]{same_capacities_1.png}
+                        \includegraphics[scale=0.30]{same_capacities_2.png}
                 \end{center}
                 This is due to the fact that on one hand, the static method has comparatively better results thanks to the random choice of the
                 communication source and destination, and on the other hand the repartition done by the load balancing and adaptative algorithms
                 cannot use the capacity as a deciding factor anymore.
         \end{itemize}
 \end{itemize}
-\section{References section}
-
-
+\section{Bibliography}
+\begin{itemize}
+        \item BEYLOT, A.-L. (2022). PSTN networks courses for Enseeiht. 
+        \item Scipy. (n.d.). The Dijkstra algorithm - Scipy . scipy.sparse.csgraph.dijkstra.
+        Retrieved from https://docs.scipy.org
+\end{itemize}
 \end{document}
 
 

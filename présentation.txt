@@ -1,0 +1,21 @@
+IMHO faut faire quelque chose comme ça
+
+- blabla de bonjour
+- lancer un test qui produit un résultat qu'on a déjà montré,
+    pour prouver que ça marche (ex: avec pannes 2, 100 users, 3 CTS et 4 CA)
+    et une moyenne de genre 20 histoire que ça soit pas trop long
+- pendant qu'il s'exécute, commenter l'architecture du main:
+    Parler du double ajout de liens
+    Parler du parsing pour qu'il puisse exécuter es propres tests
+    Noter le fait qu'une version verbose existe, mais qu'elle ne doit etre utilisée quavec genre 20 users sinon flood
+- commenter le résultat "oui voila ça marche blablabla
+- lancer une deuxième exécution avec l'autre panne (node failure). Ca permet de montrer au prof comment changer dans le code.
+    Mettre une moyenne de genre 20 aussi pour avoir le temps de parler
+- Pendant l'exécution, discuter de l'archi de commutateur:
+    - expliquer la gestion de la méthode selon la stratégie
+    - expliquer dans les grandes lignes les choix pour les stratégies sauf statique parce qu'osef lol 
+    - expliquer comment les pannes sont modélisées
+- Commenter le résultat succintement
+- ptit mot de la fin
+- voili voilou
+    
