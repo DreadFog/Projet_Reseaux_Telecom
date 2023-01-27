@@ -38,7 +38,7 @@ user : (2, 3, 1) - CA : (2, 3, 0)
  [2. 2. 0. 1. 0.]]
 Strategie : LoadBalancing
 Nombre de pannes : 0
-Charge du \réseau : 10%
+Charge du réseau : 10%
 0 / 1, users : 3, users_count : 3
 Appel de (1, 2, 1) vers (2, 3, 1)
 Demande de communication sur le commutateur :                 (1, 2, 0) de (1, 2, 1) vers (2, 3, 1)
